@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { BingoCell } from './bingo/BingoCell';
-import { BingoHeader } from './bingo/BingoHeader';
+import { BingoGrid } from './bingo/BingoGrid';
+import { checkWinningPattern } from '@/utils/bingoUtils';
 
 interface BingoCell {
   number: number;
@@ -18,7 +18,13 @@ interface PlayerCardProps {
   cardId?: string;
 }
 
-export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNumbers = [], gameId, cardId }: PlayerCardProps) => {
+export const PlayerCard = ({ 
+  numbers: initialNumbers, 
+  preview = false, 
+  markedNumbers = [], 
+  gameId, 
+  cardId 
+}: PlayerCardProps) => {
   const [card, setCard] = useState<BingoCell[][]>([]);
   const { toast } = useToast();
 
@@ -53,7 +59,6 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
       const { min, max } = columnRanges[col];
       const numbers = [];
       
-      // Generate 5 unique numbers for each column
       while (numbers.length < 5) {
         const num = Math.floor(Math.random() * (max - min + 1)) + min;
         if (!numbers.includes(num)) {
@@ -61,16 +66,13 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         }
       }
       
-      // Sort numbers in ascending order
       numbers.sort((a, b) => a - b);
       
-      // Assign numbers to the column
       for (let row = 0; row < 5; row++) {
         newCard[row][col] = { number: numbers[row], marked: false };
       }
     }
 
-    // Set the center cell as FREE
     newCard[2][2] = { number: 0, marked: true };
     setCard(newCard);
   };
@@ -136,27 +138,27 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         return newCard;
       });
 
-      checkWin();
+      // Após marcar o número, verifica se ganhou
+      const { data: drawnNumbers } = await supabase
+        .from('drawn_numbers')
+        .select('number')
+        .eq('game_id', gameId);
+
+      if (drawnNumbers) {
+        const drawnSet = new Set(drawnNumbers.map(d => d.number));
+        if (checkWinningPattern(card, drawnSet)) {
+          toast({
+            title: "BINGO!",
+            description: "Parabéns! Você ganhou!",
+            className: "animate-celebrate",
+          });
+        }
+      }
     } catch (error) {
       toast({
         title: "Erro",
         description: "Não foi possível marcar o número.",
         variant: "destructive"
-      });
-    }
-  };
-
-  const checkWin = () => {
-    const hasWinningRow = card.some(row => row.every(cell => cell.marked));
-    const hasWinningColumn = Array(5).fill(0).some((_, col) => card.every(row => row[col].marked));
-    const hasWinningDiagonal = 
-      (card.every((row, i) => row[i].marked) || card.every((row, i) => row[4 - i].marked));
-
-    if (hasWinningRow || hasWinningColumn || hasWinningDiagonal) {
-      toast({
-        title: "BINGO!",
-        description: "Parabéns! Você ganhou!",
-        className: "animate-celebrate",
       });
     }
   };
@@ -193,20 +195,11 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
             </span>
           </div>
         )}
-        <BingoHeader />
-        <div className="grid grid-cols-5 gap-4">
-          {card.map((row, rowIndex) => (
-            row.map((cell, colIndex) => (
-              <BingoCell
-                key={`${rowIndex}-${colIndex}`}
-                number={cell.number}
-                marked={cell.marked}
-                preview={preview}
-                onClick={() => toggleMark(rowIndex, colIndex)}
-              />
-            ))
-          ))}
-        </div>
+        <BingoGrid 
+          card={card}
+          preview={preview}
+          onCellClick={toggleMark}
+        />
       </div>
     </div>
   );
