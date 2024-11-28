@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tables } from "@/integrations/supabase/types";
 
 interface Player {
   name: string;
@@ -9,13 +10,8 @@ interface WinnerCard {
   player: Player;
 }
 
-interface Game {
-  id: string;
-  created_at: string;
-  status: string;
+interface Game extends Tables<'games'> {
   winner_card: WinnerCard[];
-  winner_card_id: string | null;
-  finished_at: timestamp | null;
 }
 
 interface GamesListProps {
@@ -24,7 +20,7 @@ interface GamesListProps {
 }
 
 export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
-  const getStatusBadge = (status: string, winnerCardId: string | null, finishedAt: timestamp | null) => {
+  const getStatusBadge = (status: string, winnerCardId: string | null, finishedAt: string | null) => {
     if (winnerCardId || status === 'finished' || finishedAt) {
       return (
         <Badge variant="destructive" className="bg-red-500">
