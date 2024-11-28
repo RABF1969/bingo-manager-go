@@ -61,7 +61,12 @@ export const PlayerRegistration = () => {
                 link_text: 'Não tem uma conta? Registre-se',
                 confirmation_text: 'Verifique seu email para o link de confirmação',
                 email_input_placeholder: 'Seu endereço de email',
-                password_input_placeholder: 'Sua senha'
+                password_input_placeholder: 'Sua senha',
+                error_text: {
+                  email_input: 'Email inválido',
+                  password_input: 'Senha inválida',
+                  default: 'Erro ao tentar registrar'
+                }
               },
               sign_in: {
                 email_label: 'Email',
@@ -71,7 +76,12 @@ export const PlayerRegistration = () => {
                 social_provider_text: 'Entrar com {{provider}}',
                 link_text: 'Já tem uma conta? Entre',
                 email_input_placeholder: 'Seu endereço de email',
-                password_input_placeholder: 'Sua senha'
+                password_input_placeholder: 'Sua senha',
+                error_text: {
+                  email_input: 'Email inválido',
+                  password_input: 'Senha inválida',
+                  default: 'Credenciais inválidas'
+                }
               }
             }
           }}
