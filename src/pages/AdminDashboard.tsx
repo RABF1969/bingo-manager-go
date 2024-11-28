@@ -8,10 +8,12 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { GamesList } from "@/components/dashboard/GamesList";
 
+interface Player {
+  name: string;
+}
+
 interface WinnerCard {
-  player: {
-    name: string;
-  };
+  player: Player;
 }
 
 interface DrawnNumber {
@@ -26,7 +28,7 @@ interface Game {
   winner_card_id: string | null;
   created_by: string;
   finished_at: string | null;
-  winner_card?: WinnerCard[];
+  winner_card: WinnerCard[];
   drawn_numbers: DrawnNumber[];
 }
 

@@ -1,14 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface Player {
+  name: string;
+}
+
+interface WinnerCard {
+  player: Player;
+}
+
 interface Game {
   id: string;
   created_at: string;
   status: string;
-  winner_card?: {
-    player: {
-      name: string;
-    };
-  };
+  winner_card: WinnerCard[];
 }
 
 interface GamesListProps {
@@ -42,9 +46,9 @@ export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
                 <p className="font-medium text-pink-600">
                   {game.status === 'waiting' ? 'Em andamento' : 'Finalizado'}
                 </p>
-                {game.winner_card?.player?.name && (
+                {game.winner_card?.[0]?.player?.name && (
                   <p className="text-sm text-pink-600/80">
-                    Ganhador: {game.winner_card.player.name}
+                    Ganhador: {game.winner_card[0].player.name}
                   </p>
                 )}
               </div>
