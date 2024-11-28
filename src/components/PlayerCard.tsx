@@ -15,9 +15,10 @@ interface PlayerCardProps {
   preview?: boolean;
   markedNumbers?: number[];
   gameId?: string;
+  cardId?: string;
 }
 
-export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNumbers = [], gameId }: PlayerCardProps) => {
+export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNumbers = [], gameId, cardId }: PlayerCardProps) => {
   const [card, setCard] = useState<BingoCell[][]>([]);
   const { toast } = useToast();
 
@@ -167,6 +168,11 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-transparent bg-clip-text">
             Sua Cartela de Bingo
           </h1>
+          {cardId && (
+            <p className="text-sm text-muted-foreground mb-2">
+              Cartela #{cardId.slice(0, 8)}
+            </p>
+          )}
           {!gameId && (
             <Button
               onClick={generateCard}
@@ -180,6 +186,13 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
       )}
 
       <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-950 dark:to-fuchsia-950 rounded-xl shadow-xl p-8 transform hover:scale-[1.02] transition-all duration-300">
+        {preview && cardId && (
+          <div className="text-center mb-4">
+            <span className="text-sm text-muted-foreground">
+              Cartela #{cardId.slice(0, 8)}
+            </span>
+          </div>
+        )}
         <BingoHeader />
         <div className="grid grid-cols-5 gap-4">
           {card.map((row, rowIndex) => (
