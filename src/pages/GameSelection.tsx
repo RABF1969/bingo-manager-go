@@ -101,6 +101,14 @@ const GameSelection = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="container mx-auto">
+        <div className="mb-4">
+          <Button 
+            onClick={() => navigate('/')} 
+            variant="outline"
+          >
+            Voltar para Início
+          </Button>
+        </div>
         <Card className="w-full max-w-2xl mx-auto">
           <CardHeader>
             <h2 className="text-2xl font-bold text-center">Seleção de Jogo</h2>
