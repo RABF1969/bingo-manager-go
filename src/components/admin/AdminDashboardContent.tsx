@@ -226,10 +226,7 @@ export const AdminDashboardContent = () => {
           </div>
         </div>
         
-        <DashboardStats
-          totalPlayers={totalPlayers}
-          nearWinners={[]}
-        />
+        <DashboardStats totalPlayers={totalPlayers} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-8">
