@@ -17,7 +17,7 @@ const Index = () => {
         
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
-            onClick={() => setMode('admin')}
+            onClick={() => navigate('/admin-dashboard')}
             className="px-8 py-6 text-lg"
             variant="outline"
           >
