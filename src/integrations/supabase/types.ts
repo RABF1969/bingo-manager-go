@@ -17,6 +17,7 @@ export type Database = {
           marked_numbers: Json
           numbers: Json
           player_id: string
+          selected: boolean | null
         }
         Insert: {
           created_at?: string
@@ -25,6 +26,7 @@ export type Database = {
           marked_numbers?: Json
           numbers: Json
           player_id: string
+          selected?: boolean | null
         }
         Update: {
           created_at?: string
@@ -33,6 +35,7 @@ export type Database = {
           marked_numbers?: Json
           numbers?: Json
           player_id?: string
+          selected?: boolean | null
         }
         Relationships: [
           {

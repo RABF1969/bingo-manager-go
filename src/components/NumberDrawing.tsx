@@ -16,11 +16,23 @@ export const NumberDrawing = ({ gameId }: NumberDrawingProps) => {
   const [drawnNumbers, setDrawnNumbers] = useState<DrawnNumber[]>([]);
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
   const { toast } = useToast();
-  const [audio] = useState(new Audio('/number-sound.mp3'));
+  const [audio] = useState(() => {
+    const sound = new Audio('/number-sound.mp3');
+    sound.preload = 'auto';
+    return sound;
+  });
 
-  const playNumberSound = () => {
-    audio.currentTime = 0;
-    audio.play().catch(error => console.log('Error playing sound:', error));
+  useEffect(() => {
+    // Preload the audio when component mounts
+    audio.load();
+  }, [audio]);
+
+  const playNumberSound = async () => {
+    try {
+      await audio.play();
+    } catch (error) {
+      console.error('Erro ao tocar o som:', error);
+    }
   };
 
   const drawNumber = async () => {
@@ -62,7 +74,7 @@ export const NumberDrawing = ({ gameId }: NumberDrawingProps) => {
 
       setCurrentNumber(newNumber);
       setDrawnNumbers(prev => [...prev, { number: newNumber, timestamp: new Date() }]);
-      playNumberSound();
+      await playNumberSound();
       
       toast({
         title: "Número Sorteado",
