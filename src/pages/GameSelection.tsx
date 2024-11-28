@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { PlayerCard } from "@/components/PlayerCard";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
+import { GameCard } from "@/components/game-selection/GameCard";
+import { CardSelectionCarousel } from "@/components/game-selection/CardSelectionCarousel";
 
 interface Game {
   id: string;
@@ -52,7 +46,6 @@ const GameSelection = () => {
       const { data, error } = await supabase
         .from('games')
         .select('*')
-        .eq('status', 'waiting')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -119,7 +112,6 @@ const GameSelection = () => {
   const handleGameSelect = async (gameId: string) => {
     setSelectedGame(gameId);
     
-    // Check if player already has a card for this game
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       navigate('/player');
@@ -134,7 +126,6 @@ const GameSelection = () => {
       .single();
 
     if (existingCard) {
-      // If player already has a card, navigate to the player view
       toast({
         title: "Cartela encontrada",
         description: "Você já possui uma cartela neste jogo. Redirecionando para sua cartela...",
@@ -143,7 +134,6 @@ const GameSelection = () => {
       return;
     }
 
-    // If no existing card, generate new cards for selection
     const cards = generateCards();
     setAvailableCards(cards);
     setSelectedCard(null);
@@ -189,9 +179,7 @@ const GameSelection = () => {
           }
         ]);
 
-      if (insertError) {
-        throw insertError;
-      }
+      if (insertError) throw insertError;
 
       toast({
         title: "Sucesso!",
@@ -239,22 +227,13 @@ const GameSelection = () => {
                 {!selectedGame ? (
                   <div className="grid gap-4">
                     {games.map((game) => (
-                      <Card key={game.id} className="p-6 hover:shadow-lg transition-shadow">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="font-medium text-lg">Jogo #{game.id.slice(0, 8)}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Criado em: {new Date(game.created_at).toLocaleString('pt-BR')}
-                            </p>
-                          </div>
-                          <Button 
-                            onClick={() => handleGameSelect(game.id)}
-                            className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
-                          >
-                            Selecionar
-                          </Button>
-                        </div>
-                      </Card>
+                      <GameCard
+                        key={game.id}
+                        id={game.id}
+                        createdAt={game.created_at}
+                        status={game.status}
+                        onSelect={handleGameSelect}
+                      />
                     ))}
                   </div>
                 ) : (
@@ -276,26 +255,11 @@ const GameSelection = () => {
                       </Button>
                     </div>
                     
-                    <div className="relative px-12">
-                      <Carousel className="w-full max-w-3xl mx-auto">
-                        <CarouselContent>
-                          {availableCards.map((card) => (
-                            <CarouselItem key={card.id}>
-                              <div 
-                                className={`cursor-pointer transition-all duration-300 transform hover:scale-105 p-4 rounded-xl ${
-                                  selectedCard === card.id ? 'ring-4 ring-violet-500/50' : ''
-                                }`}
-                                onClick={() => handleCardSelect(card.id)}
-                              >
-                                <PlayerCard numbers={card.numbers} preview />
-                              </div>
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                      </Carousel>
-                    </div>
+                    <CardSelectionCarousel
+                      availableCards={availableCards}
+                      selectedCard={selectedCard}
+                      onCardSelect={handleCardSelect}
+                    />
 
                     <div className="flex justify-center pt-6">
                       <Button 
