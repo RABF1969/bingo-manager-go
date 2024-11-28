@@ -13,6 +13,16 @@ interface BingoCard {
   game_id: string;
 }
 
+interface SupabaseBingoCard {
+  id: string;
+  numbers: string | number[][];
+  marked_numbers: string | number[];
+  game_id: string;
+  created_at: string;
+  player_id: string;
+  selected: boolean | null;
+}
+
 const Player = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,7 +54,14 @@ const Player = () => {
             variant: "destructive"
           });
         } else if (card) {
-          setPlayerCard(card);
+          // Parse the JSON data from Supabase
+          const parsedCard: BingoCard = {
+            id: card.id,
+            numbers: typeof card.numbers === 'string' ? JSON.parse(card.numbers) : card.numbers,
+            marked_numbers: typeof card.marked_numbers === 'string' ? JSON.parse(card.marked_numbers) : card.marked_numbers,
+            game_id: card.game_id
+          };
+          setPlayerCard(parsedCard);
         }
       }
       setLoading(false);
