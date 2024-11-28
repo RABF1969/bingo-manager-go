@@ -9,6 +9,7 @@ import { WinnerDialog } from "@/components/dashboard/WinnerDialog";
 import { NearWinners } from "@/components/dashboard/NearWinners";
 import { GameControls } from "@/components/dashboard/GameControls";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { isFullCardComplete } from "@/utils/gameUtils";
 
 interface Player {
   name: string;
@@ -35,10 +36,6 @@ const AdminDashboard = () => {
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [winner, setWinner] = useState<Player | null>(null);
-  const [nearWinners, setNearWinners] = useState<Array<{
-    playerName: string;
-    missingNumbers: number[];
-  }>>([]);
   const [totalPlayers, setTotalPlayers] = useState(0);
 
   const { data: recentGames, refetch: refetchGames } = useQuery({
@@ -98,34 +95,8 @@ const AdminDashboard = () => {
       for (const card of cards) {
         const numbers = card.numbers as number[][];
         const markedNumbers = new Set(card.marked_numbers as number[]);
-        let hasWon = false;
 
-        // Check rows
-        hasWon = hasWon || numbers.some(row => 
-          row.every(num => num === 0 || (drawnSet.has(num)))
-        );
-
-        // Check columns
-        if (!hasWon) {
-          for (let col = 0; col < 5; col++) {
-            const colNumbers = numbers.map(row => row[col]);
-            if (colNumbers.every(num => num === 0 || (drawnSet.has(num)))) {
-              hasWon = true;
-              break;
-            }
-          }
-        }
-
-        // Check diagonals
-        if (!hasWon) {
-          const diagonal1 = [numbers[0][0], numbers[1][1], numbers[2][2], numbers[3][3], numbers[4][4]];
-          const diagonal2 = [numbers[0][4], numbers[1][3], numbers[2][2], numbers[3][1], numbers[4][0]];
-          
-          hasWon = hasWon || diagonal1.every(num => num === 0 || (drawnSet.has(num)));
-          hasWon = hasWon || diagonal2.every(num => num === 0 || (drawnSet.has(num)));
-        }
-
-        if (hasWon) {
+        if (isFullCardComplete(numbers, markedNumbers, drawnSet)) {
           const { error: updateError } = await supabase
             .from('games')
             .update({ 
@@ -139,6 +110,10 @@ const AdminDashboard = () => {
           if (!updateError) {
             setWinner(card.player as Player);
             setShowWinnerDialog(true);
+            toast({
+              title: "Bingo!",
+              description: `${card.player.name} completou a cartela!`,
+            });
           }
           break;
         }
@@ -182,7 +157,7 @@ const AdminDashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentGameId]);
+  }, [currentGameId, toast]);
 
   const handleCreateGame = async () => {
     try {
@@ -237,14 +212,27 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
       <div className="container mx-auto max-w-7xl">
-        <GameControls 
-          gameId={currentGameId}
-          onCreateGame={handleCreateGame}
-        />
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Painel Administrativo
+          </h1>
+          <div className="flex gap-4">
+            <Button onClick={() => navigate('/')} variant="outline">
+              Voltar para Início
+            </Button>
+            <Button 
+              onClick={handleCreateGame} 
+              className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Jogo
+            </Button>
+          </div>
+        </div>
         
         <DashboardStats
           totalPlayers={totalPlayers}
-          nearWinners={nearWinners}
+          nearWinners={[]}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

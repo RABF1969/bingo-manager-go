@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { findNearWinners } from '@/utils/gameUtils';
 
 interface NearWinner {
   playerName: string;
@@ -34,58 +35,7 @@ export const NearWinners = ({ gameId }: { gameId: string | null }) => {
 
       if (!cards) return;
 
-      const newNearWinners = cards.reduce<NearWinner[]>((acc, card) => {
-        const numbers = card.numbers as number[][];
-        const markedNumbers = new Set(card.marked_numbers as number[]);
-        
-        // Check rows
-        for (let row = 0; row < 5; row++) {
-          const missing = numbers[row].filter(num => 
-            !markedNumbers.has(num) && drawnSet.has(num)
-          );
-          if (missing.length <= 3 && missing.length > 0) {
-            acc.push({
-              playerName: (card.player as any).name,
-              missingNumbers: missing
-            });
-            return acc;
-          }
-        }
-
-        // Check columns
-        for (let col = 0; col < 5; col++) {
-          const colNumbers = numbers.map(row => row[col]);
-          const missing = colNumbers.filter(num => 
-            !markedNumbers.has(num) && drawnSet.has(num)
-          );
-          if (missing.length <= 3 && missing.length > 0) {
-            acc.push({
-              playerName: (card.player as any).name,
-              missingNumbers: missing
-            });
-            return acc;
-          }
-        }
-
-        // Check diagonals
-        const diagonal1 = [numbers[0][0], numbers[1][1], numbers[2][2], numbers[3][3], numbers[4][4]];
-        const diagonal2 = [numbers[0][4], numbers[1][3], numbers[2][2], numbers[3][1], numbers[4][0]];
-        
-        [diagonal1, diagonal2].forEach(diagonal => {
-          const missing = diagonal.filter(num => 
-            !markedNumbers.has(num) && drawnSet.has(num)
-          );
-          if (missing.length <= 3 && missing.length > 0) {
-            acc.push({
-              playerName: (card.player as any).name,
-              missingNumbers: missing
-            });
-          }
-        });
-
-        return acc;
-      }, []);
-
+      const newNearWinners = findNearWinners(cards, drawnSet);
       setNearWinners(newNearWinners);
     };
 
