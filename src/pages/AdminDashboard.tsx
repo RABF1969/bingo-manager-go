@@ -7,15 +7,8 @@ import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { GamesList } from "@/components/dashboard/GamesList";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+import { WinnerDialog } from "@/components/dashboard/WinnerDialog";
+import { NearWinners } from "@/components/dashboard/NearWinners";
 
 interface Player {
   name: string;
@@ -73,14 +66,96 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    const channel = supabase.channel('games')
+    if (!currentGameId) return;
+
+    const checkForWinner = async () => {
+      const { data: drawnNumbers } = await supabase
+        .from('drawn_numbers')
+        .select('number')
+        .eq('game_id', currentGameId);
+
+      const drawnSet = new Set(drawnNumbers?.map(d => d.number) || []);
+
+      const { data: cards } = await supabase
+        .from('bingo_cards')
+        .select(`
+          id,
+          numbers,
+          marked_numbers,
+          player:profiles(id, name, email, phone)
+        `)
+        .eq('game_id', currentGameId);
+
+      if (!cards) return;
+
+      for (const card of cards) {
+        const numbers = card.numbers as number[][];
+        const markedNumbers = new Set(card.marked_numbers as number[]);
+        let hasWon = false;
+
+        // Check rows
+        hasWon = hasWon || numbers.some(row => 
+          row.every(num => num === 0 || (drawnSet.has(num)))
+        );
+
+        // Check columns
+        if (!hasWon) {
+          for (let col = 0; col < 5; col++) {
+            const colNumbers = numbers.map(row => row[col]);
+            if (colNumbers.every(num => num === 0 || (drawnSet.has(num)))) {
+              hasWon = true;
+              break;
+            }
+          }
+        }
+
+        // Check diagonals
+        if (!hasWon) {
+          const diagonal1 = [numbers[0][0], numbers[1][1], numbers[2][2], numbers[3][3], numbers[4][4]];
+          const diagonal2 = [numbers[0][4], numbers[1][3], numbers[2][2], numbers[3][1], numbers[4][0]];
+          
+          hasWon = hasWon || diagonal1.every(num => num === 0 || (drawnSet.has(num)));
+          hasWon = hasWon || diagonal2.every(num => num === 0 || (drawnSet.has(num)));
+        }
+
+        if (hasWon) {
+          const { error: updateError } = await supabase
+            .from('games')
+            .update({ 
+              winner_card_id: card.id,
+              status: 'finished',
+              finished_at: new Date().toISOString()
+            })
+            .eq('id', currentGameId)
+            .is('winner_card_id', null);
+
+          if (!updateError) {
+            setWinner(card.player as Player);
+            setShowWinnerDialog(true);
+          }
+          break;
+        }
+      }
+    };
+
+    const channel = supabase.channel(`game-${currentGameId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drawn_numbers',
+          filter: `game_id=eq.${currentGameId}`
+        },
+        () => checkForWinner()
+      )
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'games',
-          filter: 'winner_card_id.is.not.null'
+          filter: `id=eq.${currentGameId} and winner_card_id.is.not.null`
         },
         async (payload) => {
           const { data: winnerData, error } = await supabase
@@ -100,7 +175,7 @@ const AdminDashboard = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [currentGameId]);
 
   const handleCreateGame = async () => {
     try {
@@ -171,11 +246,14 @@ const AdminDashboard = () => {
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <Card className="bg-gradient-to-br from-white to-purple-50">
-            <CardContent className="pt-6">
-              <NumberDrawing gameId={currentGameId} />
-            </CardContent>
-          </Card>
+          <div className="space-y-8">
+            <Card className="bg-gradient-to-br from-white to-purple-50">
+              <CardContent className="pt-6">
+                <NumberDrawing gameId={currentGameId} />
+              </CardContent>
+            </Card>
+            <NearWinners gameId={currentGameId} />
+          </div>
 
           <GamesList 
             games={recentGames || []} 
@@ -183,33 +261,11 @@ const AdminDashboard = () => {
           />
         </div>
 
-        <AlertDialog open={showWinnerDialog} onOpenChange={setShowWinnerDialog}>
-          <AlertDialogContent className="bg-gradient-to-br from-purple-100 to-pink-100">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-2xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                🎉 BINGO! Temos um Vencedor! 🎉
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-center space-y-4 mt-4">
-                <p className="text-xl font-semibold text-gray-800">
-                  {winner?.name}
-                </p>
-                <p className="text-gray-600">
-                  Email: {winner?.email}
-                </p>
-                {winner?.phone && (
-                  <p className="text-gray-600">
-                    Telefone: {winner?.phone}
-                  </p>
-                )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                Fechar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <WinnerDialog
+          open={showWinnerDialog}
+          onOpenChange={setShowWinnerDialog}
+          winner={winner}
+        />
       </div>
     </div>
   );
