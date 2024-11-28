@@ -40,6 +40,8 @@ export const PlayerRegistration = () => {
               container: 'w-full',
               button: 'w-full px-4 py-2 bg-black text-white rounded hover:bg-gray-800',
               input: 'w-full px-3 py-2 border rounded',
+              message: 'text-sm text-red-600 mt-1',
+              anchor: 'text-black hover:text-gray-600',
             }
           }}
           localization={{
@@ -53,7 +55,10 @@ export const PlayerRegistration = () => {
                 link_text: 'Não tem uma conta? Registre-se',
                 confirmation_text: 'Verifique seu email para o link de confirmação',
                 email_input_placeholder: 'Seu endereço de email',
-                password_input_placeholder: 'Sua senha',
+                password_input_placeholder: 'Sua senha (mínimo 6 caracteres)',
+                password_error: 'A senha deve ter pelo menos 6 caracteres',
+                email_error: 'Email inválido',
+                invalid_credentials: 'Email ou senha inválidos',
               },
               sign_in: {
                 email_label: 'Email',
@@ -64,6 +69,7 @@ export const PlayerRegistration = () => {
                 link_text: 'Já tem uma conta? Entre',
                 email_input_placeholder: 'Seu endereço de email',
                 password_input_placeholder: 'Sua senha',
+                invalid_credentials: 'Email ou senha inválidos',
               },
               forgotten_password: {
                 email_label: 'Email',
@@ -72,13 +78,15 @@ export const PlayerRegistration = () => {
                 loading_button_label: 'Enviando instruções...',
                 link_text: 'Esqueceu sua senha?',
                 email_input_placeholder: 'Seu endereço de email',
+                confirmation_text: 'Verifique seu email para redefinir sua senha',
               },
               update_password: {
                 password_label: 'Nova senha',
                 button_label: 'Atualizar senha',
                 loading_button_label: 'Atualizando senha...',
                 confirmation_text: 'Sua senha foi atualizada',
-                password_input_placeholder: 'Sua nova senha',
+                password_input_placeholder: 'Sua nova senha (mínimo 6 caracteres)',
+                password_error: 'A senha deve ter pelo menos 6 caracteres',
               },
               magic_link: {
                 email_input_label: 'Email',
@@ -86,6 +94,7 @@ export const PlayerRegistration = () => {
                 loading_button_label: 'Enviando link mágico...',
                 link_text: 'Enviar link mágico',
                 email_input_placeholder: 'Seu endereço de email',
+                confirmation_text: 'Verifique seu email para o link de acesso',
               },
             },
           }}
