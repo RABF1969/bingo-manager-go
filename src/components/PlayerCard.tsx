@@ -71,13 +71,15 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data: gameData } = await supabase
+      // Check if the number has been drawn
+      const { data: gameData, error: gameError } = await supabase
         .from('drawn_numbers')
         .select('number')
         .eq('game_id', gameId)
-        .eq('number', number);
+        .eq('number', number)
+        .single();
 
-      if (!gameData || gameData.length === 0) {
+      if (gameError || !gameData) {
         toast({
           title: "Número não sorteado",
           description: "Este número ainda não foi sorteado!",
@@ -86,14 +88,15 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         return;
       }
 
-      const { data: cardData } = await supabase
+      // Update marked numbers in the database
+      const { data: cardData, error: cardError } = await supabase
         .from('bingo_cards')
         .select('marked_numbers')
         .eq('game_id', gameId)
         .eq('player_id', session.user.id)
         .single();
 
-      if (!cardData) return;
+      if (cardError || !cardData) return;
 
       const newMarkedNumbers = isMarked
         ? (cardData.marked_numbers as number[]).filter(n => n !== number)
@@ -146,14 +149,14 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
     <div className={`container mx-auto p-4 ${preview ? 'max-w-sm' : 'max-w-lg'}`}>
       {!preview && (
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-transparent bg-clip-text">
             Sua Cartela de Bingo
           </h1>
           {!gameId && (
             <Button
               onClick={generateCard}
               variant="outline"
-              className="mt-4"
+              className="mt-4 hover:bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:text-white transition-all duration-300"
             >
               Nova Cartela
             </Button>
@@ -161,7 +164,7 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-card to-background rounded-xl shadow-xl p-6">
+      <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-950 dark:to-fuchsia-950 rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-all duration-300">
         <BingoHeader />
         <div className="grid grid-cols-5 gap-3">
           {card.map((row, rowIndex) => (
