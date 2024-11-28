@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from 'react-router-dom';
 
 interface PlayerData {
   name: string;
@@ -16,15 +18,58 @@ export const PlayerRegistration = () => {
     email: '',
     phone: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aqui será integrado com backend posteriormente
-    toast({
-      title: "Registro realizado!",
-      description: "Você já pode escolher sua cartela.",
-    });
+    setIsLoading(true);
+
+    try {
+      // Primeiro, criar o usuário no Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: playerData.email,
+        password: Math.random().toString(36).slice(-8), // Senha aleatória temporária
+        options: {
+          data: {
+            name: playerData.name,
+          }
+        }
+      });
+
+      if (authError) throw authError;
+
+      // O perfil será criado automaticamente pelo trigger que configuramos
+
+      // Atualizar o telefone no perfil
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ phone: playerData.phone })
+        .eq('id', authData.user?.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Registro realizado com sucesso!",
+        description: "Você será redirecionado para escolher sua cartela.",
+      });
+
+      // Redirecionar para a página de seleção de cartela após um breve delay
+      setTimeout(() => {
+        navigate('/game-selection');
+      }, 2000);
+
+    } catch (error) {
+      console.error('Erro no registro:', error);
+      toast({
+        title: "Erro no registro",
+        description: "Ocorreu um erro ao tentar registrar. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -40,6 +85,7 @@ export const PlayerRegistration = () => {
               value={playerData.name}
               onChange={(e) => setPlayerData({ ...playerData, name: e.target.value })}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -49,6 +95,7 @@ export const PlayerRegistration = () => {
               value={playerData.email}
               onChange={(e) => setPlayerData({ ...playerData, email: e.target.value })}
               required
+              disabled={isLoading}
             />
           </div>
           <div>
@@ -57,10 +104,11 @@ export const PlayerRegistration = () => {
               value={playerData.phone}
               onChange={(e) => setPlayerData({ ...playerData, phone: e.target.value })}
               required
+              disabled={isLoading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            Registrar
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? "Registrando..." : "Registrar"}
           </Button>
         </form>
       </CardContent>

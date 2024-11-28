@@ -9,7 +9,136 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      bingo_cards: {
+        Row: {
+          created_at: string
+          game_id: string
+          id: string
+          marked_numbers: Json
+          numbers: Json
+          player_id: string
+        }
+        Insert: {
+          created_at?: string
+          game_id: string
+          id?: string
+          marked_numbers?: Json
+          numbers: Json
+          player_id: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string
+          id?: string
+          marked_numbers?: Json
+          numbers?: Json
+          player_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bingo_cards_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bingo_cards_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawn_numbers: {
+        Row: {
+          drawn_at: string
+          game_id: string
+          id: string
+          number: number
+        }
+        Insert: {
+          drawn_at?: string
+          game_id: string
+          id?: string
+          number: number
+        }
+        Update: {
+          drawn_at?: string
+          game_id?: string
+          id?: string
+          number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawn_numbers_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          created_at: string
+          created_by: string
+          finished_at: string | null
+          id: string
+          status: string
+          winner_card_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          finished_at?: string | null
+          id?: string
+          status?: string
+          winner_card_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          finished_at?: string | null
+          id?: string
+          status?: string
+          winner_card_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "games_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
