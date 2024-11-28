@@ -14,6 +14,7 @@ interface Game {
   created_at: string;
   status: string;
   winner_card: WinnerCard[];
+  winner_card_id: string | null;
 }
 
 interface GamesListProps {
@@ -22,8 +23,8 @@ interface GamesListProps {
 }
 
 export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
-  const getStatusBadge = (status: string, hasWinner: boolean) => {
-    if (hasWinner || status === 'finished') {
+  const getStatusBadge = (status: string, winnerCardId: string | null) => {
+    if (winnerCardId || status === 'finished') {
       return (
         <Badge variant="destructive" className="bg-red-500">
           Encerrado
@@ -59,7 +60,7 @@ export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
                 </p>
               </div>
               <div className="text-right flex flex-col items-end gap-2">
-                {getStatusBadge(game.status, game.winner_card?.length > 0)}
+                {getStatusBadge(game.status, game.winner_card_id)}
                 {game.winner_card?.[0]?.player?.name && (
                   <p className="text-sm text-pink-600/80">
                     Ganhador: {game.winner_card[0].player.name}
