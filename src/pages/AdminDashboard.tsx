@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Hash, Clock, Users } from "lucide-react";
+import { Trophy, Hash, Clock, Users, Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Profile {
   name: string;
@@ -21,6 +22,7 @@ interface BingoCard {
 interface Game {
   id: string;
   created_at: string;
+  created_by: string;
   status: string;
   finished_at: string | null;
   winner_card_id: string | null;
@@ -30,8 +32,9 @@ interface Game {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const { data: recentGames } = useQuery<Game[]>({
+  const { data: recentGames } = useQuery({
     queryKey: ['recentGames'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -50,7 +53,7 @@ const AdminDashboard = () => {
         .limit(5);
 
       if (error) throw error;
-      return (data || []) as Game[];
+      return (data || []) as unknown as Game[];
     },
   });
 
@@ -66,14 +69,62 @@ const AdminDashboard = () => {
     },
   });
 
+  const handleCreateGame = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Erro",
+          description: "Você precisa estar logado para criar um jogo.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('games')
+        .insert([
+          {
+            created_by: session.user.id,
+            status: 'waiting'
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso!",
+        description: "Novo jogo criado com sucesso.",
+      });
+
+      // Aqui você pode redirecionar para a página do jogo se desejar
+      // navigate(`/game/${data.id}`);
+    } catch (error) {
+      toast({
+        title: "Erro ao criar jogo",
+        description: "Não foi possível criar um novo jogo.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="container mx-auto max-w-7xl">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Painel Administrativo</h1>
-          <Button onClick={() => navigate('/')} variant="outline">
-            Voltar para Início
-          </Button>
+          <div className="flex gap-4">
+            <Button onClick={() => navigate('/')} variant="outline">
+              Voltar para Início
+            </Button>
+            <Button onClick={handleCreateGame} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Jogo
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -128,7 +179,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {recentGames?.filter(game => game.status === 'waiting').length || 0}
+                {(recentGames as Game[] || []).filter(game => game.status === 'waiting').length || 0}
               </div>
             </CardContent>
           </Card>
@@ -141,7 +192,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentGames?.map((game) => (
+                {(recentGames as Game[] || []).map((game) => (
                   <div
                     key={game.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
