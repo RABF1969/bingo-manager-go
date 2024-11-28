@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BingoCell {
   number: number;
@@ -10,21 +11,26 @@ interface BingoCell {
 interface PlayerCardProps {
   numbers?: number[][];
   preview?: boolean;
+  markedNumbers?: number[];
+  gameId?: string;
 }
 
-export const PlayerCard = ({ numbers: initialNumbers, preview = false }: PlayerCardProps) => {
+export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNumbers = [], gameId }: PlayerCardProps) => {
   const [card, setCard] = useState<BingoCell[][]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     if (initialNumbers) {
       setCard(initialNumbers.map(row => 
-        row.map(number => ({ number, marked: number === 0 }))
+        row.map(number => ({ 
+          number, 
+          marked: number === 0 || markedNumbers.includes(number)
+        }))
       ));
     } else {
       generateCard();
     }
-  }, [initialNumbers]);
+  }, [initialNumbers, markedNumbers]);
 
   const generateCard = () => {
     const newCard: BingoCell[][] = [];
@@ -52,20 +58,76 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false }: PlayerC
     setCard(newCard);
   };
 
-  const toggleMark = (rowIndex: number, colIndex: number) => {
-    if (preview || rowIndex === 2 && colIndex === 2) return; // Free space or preview mode
+  const toggleMark = async (rowIndex: number, colIndex: number) => {
+    if (preview || (rowIndex === 2 && colIndex === 2)) return; // Free space or preview mode
 
-    setCard(prev => {
-      const newCard = [...prev];
-      newCard[rowIndex] = [...newCard[rowIndex]];
-      newCard[rowIndex][colIndex] = {
-        ...newCard[rowIndex][colIndex],
-        marked: !newCard[rowIndex][colIndex].marked,
-      };
-      return newCard;
-    });
+    const number = card[rowIndex][colIndex].number;
+    const isMarked = card[rowIndex][colIndex].marked;
 
-    checkWin();
+    if (!gameId) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: gameData } = await supabase
+        .from('drawn_numbers')
+        .select('number')
+        .eq('game_id', gameId)
+        .eq('number', number);
+
+      if (!gameData || gameData.length === 0) {
+        toast({
+          title: "Número não sorteado",
+          description: "Este número ainda não foi sorteado!",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update marked numbers in the database
+      const { data: cardData } = await supabase
+        .from('bingo_cards')
+        .select('marked_numbers')
+        .eq('game_id', gameId)
+        .eq('player_id', session.user.id)
+        .single();
+
+      if (!cardData) return;
+
+      let newMarkedNumbers = [...cardData.marked_numbers];
+      if (isMarked) {
+        newMarkedNumbers = newMarkedNumbers.filter(n => n !== number);
+      } else {
+        newMarkedNumbers.push(number);
+      }
+
+      const { error: updateError } = await supabase
+        .from('bingo_cards')
+        .update({ marked_numbers: newMarkedNumbers })
+        .eq('game_id', gameId)
+        .eq('player_id', session.user.id);
+
+      if (updateError) throw updateError;
+
+      setCard(prev => {
+        const newCard = [...prev];
+        newCard[rowIndex] = [...newCard[rowIndex]];
+        newCard[rowIndex][colIndex] = {
+          ...newCard[rowIndex][colIndex],
+          marked: !isMarked,
+        };
+        return newCard;
+      });
+
+      checkWin();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível marcar o número.",
+        variant: "destructive"
+      });
+    }
   };
 
   const checkWin = () => {
@@ -98,13 +160,15 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false }: PlayerC
       {!preview && (
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">Sua Cartela de Bingo</h1>
-          <Button
-            onClick={generateCard}
-            variant="outline"
-            className="mt-4"
-          >
-            Nova Cartela
-          </Button>
+          {!gameId && (
+            <Button
+              onClick={generateCard}
+              variant="outline"
+              className="mt-4"
+            >
+              Nova Cartela
+            </Button>
+          )}
         </div>
       )}
 

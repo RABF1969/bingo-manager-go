@@ -97,6 +97,32 @@ const GameSelection = () => {
 
   const handleGameSelect = async (gameId: string) => {
     setSelectedGame(gameId);
+    
+    // Check if player already has a card for this game
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate('/player');
+      return;
+    }
+
+    const { data: existingCard } = await supabase
+      .from('bingo_cards')
+      .select('*')
+      .eq('game_id', gameId)
+      .eq('player_id', session.user.id)
+      .single();
+
+    if (existingCard) {
+      // If player already has a card, navigate to the player view
+      toast({
+        title: "Cartela encontrada",
+        description: "Você já possui uma cartela neste jogo. Redirecionando para sua cartela...",
+      });
+      navigate('/player', { state: { gameId } });
+      return;
+    }
+
+    // If no existing card, generate new cards for selection
     const cards = generateCards();
     setAvailableCards(cards);
     setSelectedCard(null);
@@ -130,23 +156,6 @@ const GameSelection = () => {
         throw new Error("Cartela não encontrada");
       }
 
-      // Check if player already has a card in this game
-      const { data: existingCard } = await supabase
-        .from('bingo_cards')
-        .select('id')
-        .eq('game_id', selectedGame)
-        .eq('player_id', session.user.id)
-        .single();
-
-      if (existingCard) {
-        toast({
-          title: "Erro",
-          description: "Você já possui uma cartela neste jogo.",
-          variant: "destructive"
-        });
-        return;
-      }
-
       const { error: insertError } = await supabase
         .from('bingo_cards')
         .insert([
@@ -168,7 +177,7 @@ const GameSelection = () => {
         description: "Você entrou no jogo com sucesso.",
       });
 
-      navigate('/player');
+      navigate('/player', { state: { gameId: selectedGame } });
     } catch (error: any) {
       console.error('Error joining game:', error);
       toast({
