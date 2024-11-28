@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const PlayerRegistration = () => {
   const navigate = useNavigate();
@@ -23,7 +24,12 @@ export const PlayerRegistration = () => {
       <CardHeader>
         <h2 className="text-2xl font-bold text-center">Acesso ao Bingo</h2>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <Alert>
+          <AlertDescription>
+            Para criar uma conta, sua senha deve ter no mínimo 6 caracteres.
+          </AlertDescription>
+        </Alert>
         <Auth
           supabaseClient={supabase}
           appearance={{
@@ -55,7 +61,7 @@ export const PlayerRegistration = () => {
                 link_text: 'Não tem uma conta? Registre-se',
                 confirmation_text: 'Verifique seu email para o link de confirmação',
                 email_input_placeholder: 'Seu endereço de email',
-                password_input_placeholder: 'Sua senha (mínimo 6 caracteres)'
+                password_input_placeholder: 'Sua senha'
               },
               sign_in: {
                 email_label: 'Email',
@@ -81,7 +87,7 @@ export const PlayerRegistration = () => {
                 button_label: 'Atualizar senha',
                 loading_button_label: 'Atualizando senha...',
                 confirmation_text: 'Sua senha foi atualizada',
-                password_input_placeholder: 'Sua nova senha (mínimo 6 caracteres)'
+                password_input_placeholder: 'Sua nova senha'
               },
               magic_link: {
                 email_input_label: 'Email',
