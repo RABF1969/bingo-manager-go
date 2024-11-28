@@ -35,26 +35,41 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
   }, [initialNumbers, markedNumbers]);
 
   const generateCard = () => {
-    const newCard: BingoCell[][] = [];
-    const usedNumbers = new Set<number>();
+    // Initialize empty card
+    const newCard: BingoCell[][] = Array(5).fill(null).map(() => Array(5).fill({ number: 0, marked: false }));
+    
+    // Define ranges for each column (B: 1-15, I: 16-30, N: 31-45, G: 46-60, O: 61-75)
+    const columnRanges = [
+      { min: 1, max: 15 },
+      { min: 16, max: 30 },
+      { min: 31, max: 45 },
+      { min: 46, max: 60 },
+      { min: 61, max: 75 }
+    ];
 
-    for (let i = 0; i < 5; i++) {
-      const row: BingoCell[] = [];
-      const min = i * 15 + 1;
-      const max = min + 14;
-
-      for (let j = 0; j < 5; j++) {
-        let number;
-        do {
-          number = Math.floor(Math.random() * (max - min + 1)) + min;
-        } while (usedNumbers.has(number));
-
-        usedNumbers.add(number);
-        row.push({ number, marked: false });
+    // Generate numbers for each column
+    for (let col = 0; col < 5; col++) {
+      const { min, max } = columnRanges[col];
+      const numbers = [];
+      
+      // Generate 5 unique numbers for each column
+      while (numbers.length < 5) {
+        const num = Math.floor(Math.random() * (max - min + 1)) + min;
+        if (!numbers.includes(num)) {
+          numbers.push(num);
+        }
       }
-      newCard.push(row);
+      
+      // Sort numbers in ascending order
+      numbers.sort((a, b) => a - b);
+      
+      // Assign numbers to the column
+      for (let row = 0; row < 5; row++) {
+        newCard[row][col] = { number: numbers[row], marked: false };
+      }
     }
 
+    // Set the center cell as FREE
     newCard[2][2] = { number: 0, marked: true };
     setCard(newCard);
   };
