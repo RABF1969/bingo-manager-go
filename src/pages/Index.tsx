@@ -10,8 +10,8 @@ const Index = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-5xl font-bold mb-4">Virtual Bingo</h1>
-          <p className="text-xl text-muted-foreground mb-8">Choose your role to begin</p>
+          <h1 className="text-5xl font-bold mb-4">Bingo Virtual</h1>
+          <p className="text-xl text-muted-foreground mb-8">Escolha seu papel para começar</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4">
@@ -20,14 +20,14 @@ const Index = () => {
             className="px-8 py-6 text-lg"
             variant="outline"
           >
-            Game Master
+            Administrador
           </Button>
           <Button
             onClick={() => setMode('player')}
             className="px-8 py-6 text-lg"
             variant="default"
           >
-            Player
+            Jogador
           </Button>
         </div>
       </div>
@@ -42,7 +42,7 @@ const Index = () => {
           variant="ghost"
           className="mb-4"
         >
-          Back to Role Selection
+          Voltar para Seleção de Papel
         </Button>
       </div>
       {mode === 'admin' ? <AdminDashboard /> : <PlayerCard />}

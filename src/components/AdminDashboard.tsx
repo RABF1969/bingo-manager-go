@@ -18,8 +18,8 @@ export const AdminDashboard = () => {
 
     if (availableNumbers.length === 0) {
       toast({
-        title: "Game Over",
-        description: "All numbers have been drawn!",
+        title: "Fim de Jogo",
+        description: "Todos os números foram sorteados!",
         variant: "destructive",
       });
       return;
@@ -35,8 +35,8 @@ export const AdminDashboard = () => {
   return (
     <div className="container mx-auto p-8 max-w-4xl">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-2">Bingo Master</h1>
-        <p className="text-muted-foreground">Draw numbers and manage the game</p>
+        <h1 className="text-4xl font-bold mb-2">Painel do Bingo</h1>
+        <p className="text-muted-foreground">Sorteie números e gerencie o jogo</p>
       </div>
 
       <div className="flex flex-col items-center gap-8">
@@ -51,11 +51,11 @@ export const AdminDashboard = () => {
           className="px-8 py-6 text-lg"
           variant="outline"
         >
-          Draw Next Number
+          Sortear Próximo Número
         </Button>
 
         <div className="w-full">
-          <h2 className="text-2xl font-semibold mb-4">Drawn Numbers</h2>
+          <h2 className="text-2xl font-semibold mb-4">Números Sorteados</h2>
           <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
             {drawnNumbers.map(({ number }, index) => (
               <div

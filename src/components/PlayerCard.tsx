@@ -76,7 +76,7 @@ export const PlayerCard = () => {
     if (hasWinningRow || hasWinningColumn || hasWinningDiagonal) {
       toast({
         title: "BINGO!",
-        description: "Congratulations! You've won!",
+        description: "Parabéns! Você ganhou!",
         className: "animate-celebrate",
       });
     }
@@ -85,13 +85,13 @@ export const PlayerCard = () => {
   return (
     <div className="container mx-auto p-8 max-w-lg">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2">Your Bingo Card</h1>
+        <h1 className="text-4xl font-bold mb-2">Sua Cartela de Bingo</h1>
         <Button
           onClick={generateCard}
           variant="outline"
           className="mt-4"
         >
-          New Card
+          Nova Cartela
         </Button>
       </div>
 
@@ -115,7 +115,7 @@ export const PlayerCard = () => {
                 className={`bingo-cell ${cell.marked ? 'marked' : ''}`}
                 onClick={() => toggleMark(rowIndex, colIndex)}
               >
-                {cell.number === 0 ? 'FREE' : cell.number}
+                {cell.number === 0 ? 'LIVRE' : cell.number}
               </div>
             ))}
           </div>
