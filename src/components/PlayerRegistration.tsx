@@ -1,110 +1,70 @@
-import { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from 'react-router-dom';
-
-interface PlayerData {
-  name: string;
-  email: string;
-  phone: string;
-}
+import { useEffect } from 'react';
 
 export const PlayerRegistration = () => {
-  const [playerData, setPlayerData] = useState<PlayerData>({
-    name: '',
-    email: '',
-    phone: '',
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/game-selection');
+      }
+    });
 
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: playerData.email,
-        password: Math.random().toString(36).slice(-8),
-        options: {
-          data: {
-            name: playerData.name,
-          }
-        }
-      });
-
-      if (authError) throw authError;
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ phone: playerData.phone })
-        .eq('id', authData.user?.id);
-
-      if (updateError) throw updateError;
-
-      toast({
-        title: "Registro realizado com sucesso!",
-        description: "Você será redirecionado para escolher sua cartela.",
-      });
-
-      // Forçar o redirecionamento imediato
-      navigate('/game-selection');
-
-    } catch (error) {
-      console.error('Erro no registro:', error);
-      toast({
-        title: "Erro no registro",
-        description: "Ocorreu um erro ao tentar registrar. Por favor, tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <h2 className="text-2xl font-bold text-center">Registro de Jogador</h2>
+        <h2 className="text-2xl font-bold text-center">Acesso ao Bingo</h2>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Input
-              placeholder="Nome completo"
-              value={playerData.name}
-              onChange={(e) => setPlayerData({ ...playerData, name: e.target.value })}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <Input
-              type="email"
-              placeholder="E-mail"
-              value={playerData.email}
-              onChange={(e) => setPlayerData({ ...playerData, email: e.target.value })}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <Input
-              placeholder="Telefone"
-              value={playerData.phone}
-              onChange={(e) => setPlayerData({ ...playerData, phone: e.target.value })}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Registrando..." : "Registrar"}
-          </Button>
-        </form>
+        <Auth
+          supabaseClient={supabase}
+          appearance={{
+            theme: ThemeSupa,
+            variables: {
+              default: {
+                colors: {
+                  brand: '#000000',
+                  brandAccent: '#666666',
+                }
+              }
+            },
+            className: {
+              container: 'w-full',
+              button: 'w-full px-4 py-2 bg-black text-white rounded hover:bg-gray-800',
+              input: 'w-full px-3 py-2 border rounded',
+            }
+          }}
+          localization={{
+            variables: {
+              sign_up: {
+                email_label: 'Email',
+                password_label: 'Senha',
+                button_label: 'Registrar',
+                loading_button_label: 'Registrando...',
+                social_provider_text: 'Entrar com {{provider}}',
+                link_text: 'Não tem uma conta? Registre-se',
+              },
+              sign_in: {
+                email_label: 'Email',
+                password_label: 'Senha',
+                button_label: 'Entrar',
+                loading_button_label: 'Entrando...',
+                social_provider_text: 'Entrar com {{provider}}',
+                link_text: 'Já tem uma conta? Entre',
+              },
+            },
+          }}
+          providers={[]}
+          theme="light"
+        />
       </CardContent>
     </Card>
   );
