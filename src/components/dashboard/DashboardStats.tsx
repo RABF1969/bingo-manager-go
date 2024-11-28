@@ -21,9 +21,9 @@ export const DashboardStats = ({ totalPlayers, gameId }: DashboardStatsProps) =>
       </Card>
 
       {gameId && (
-        <div className="w-full">
+        <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950 dark:to-orange-950 hover:shadow-lg transition-shadow">
           <NearWinners gameId={gameId} />
-        </div>
+        </Card>
       )}
     </div>
   );
