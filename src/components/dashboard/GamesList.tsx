@@ -59,7 +59,7 @@ export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
                 </p>
               </div>
               <div className="text-right flex flex-col items-end gap-2">
-                {getStatusBadge(game.status, !!game.winner_card?.[0])}
+                {getStatusBadge(game.status, game.winner_card?.length > 0)}
                 {game.winner_card?.[0]?.player?.name && (
                   <p className="text-sm text-pink-600/80">
                     Ganhador: {game.winner_card[0].player.name}
