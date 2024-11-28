@@ -1,4 +1,3 @@
-// First, let's split the large file into smaller components
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +22,7 @@ export const AdminDashboardContent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [totalPlayers, setTotalPlayers] = useState(0);
+  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
   const { data: games, refetch: refetchGames } = useQuery({
     queryKey: ['games'],
@@ -117,12 +117,17 @@ export const AdminDashboardContent = () => {
           </div>
         </div>
         
-        <DashboardStats totalPlayers={totalPlayers} />
+        <DashboardStats totalPlayers={totalPlayers} gameId={selectedGameId} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <AdminGameManager games={games || []} onGamesUpdate={refetchGames} />
+          <AdminGameManager 
+            games={games || []} 
+            onGamesUpdate={refetchGames} 
+            onGameSelect={setSelectedGameId}
+          />
           <GamesList 
             games={games || []} 
+            onSelectGame={setSelectedGameId}
           />
         </div>
       </div>

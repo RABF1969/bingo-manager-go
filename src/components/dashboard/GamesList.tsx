@@ -1,25 +1,20 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tables } from "@/integrations/supabase/types";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-interface Player {
-  name: string;
-}
-
-interface WinnerCard {
-  player: Player;
-}
-
-interface Game extends Tables<'games'> {
-  winner_card: WinnerCard[];
+interface Game {
+  id: string;
+  status: string;
+  created_at: string;
+  finished_at: string | null;
+  winner_card: {
+    player: {
+      name: string;
+      email: string;
+      phone: string | null;
+    };
+  }[];
 }
 
 interface GamesListProps {
@@ -28,55 +23,56 @@ interface GamesListProps {
 }
 
 export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
-  const getStatusBadge = (status: string, winnerCardId: string | null, finishedAt: string | null) => {
-    if (winnerCardId || status === 'finished' || finishedAt) {
-      return (
-        <Badge variant="destructive" className="bg-red-500">
-          Encerrado
-        </Badge>
-      );
+  const getGameStatus = (game: Game) => {
+    if (game.status === 'finished') return 'Encerrado';
+    if (game.status === 'waiting') return 'Aguardando';
+    return 'Em andamento';
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'finished':
+        return 'text-red-600';
+      case 'waiting':
+        return 'text-yellow-600';
+      default:
+        return 'text-green-600';
     }
-    return (
-      <Badge variant="secondary" className="bg-green-500 text-white">
-        Em andamento
-      </Badge>
-    );
   };
 
   return (
-    <Card className="bg-gradient-to-br from-white to-purple-50">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-purple-800">Últimos Jogos</CardTitle>
+        <CardTitle>Últimos Jogos</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="overflow-auto max-h-[600px]">
+        <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID do Jogo</TableHead>
-                <TableHead>Data de Criação</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Criado</TableHead>
                 <TableHead>Ganhador</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {games.map((game) => (
-                <TableRow
+                <TableRow 
                   key={game.id}
-                  className="cursor-pointer hover:bg-purple-50/50 transition-colors"
+                  className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onSelectGame(game.id)}
                 >
-                  <TableCell className="font-medium text-purple-700">
-                    #{game.id.slice(0, 8)}
+                  <TableCell className={getStatusColor(game.status)}>
+                    {getGameStatus(game)}
                   </TableCell>
                   <TableCell>
-                    {new Date(game.created_at).toLocaleString('pt-BR')}
+                    {formatDistanceToNow(new Date(game.created_at), {
+                      addSuffix: true,
+                      locale: ptBR,
+                    })}
                   </TableCell>
                   <TableCell>
-                    {getStatusBadge(game.status, game.winner_card_id, game.finished_at)}
-                  </TableCell>
-                  <TableCell>
-                    {game.winner_card?.[0]?.player?.name || '-'}
+                    {game.winner_card?.[0]?.player.name || '-'}
                   </TableCell>
                 </TableRow>
               ))}

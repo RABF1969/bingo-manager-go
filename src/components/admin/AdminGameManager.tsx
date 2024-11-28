@@ -21,13 +21,22 @@ interface Game {
 interface AdminGameManagerProps {
   games: Game[];
   onGamesUpdate: () => void;
+  onGameSelect: (gameId: string | null) => void;
 }
 
-export const AdminGameManager = ({ games, onGamesUpdate }: AdminGameManagerProps) => {
+export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGameManagerProps) => {
   const { toast } = useToast();
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [winner, setWinner] = useState<Player | null>(null);
+
+  const handleGameUpdate = async () => {
+    if (!currentGameId) return;
+    
+    await checkGameCompletion(currentGameId);
+    await checkForWinner(currentGameId);
+    onGameSelect(currentGameId);
+  };
 
   const checkGameCompletion = async (gameId: string) => {
     const { data: drawnNumbers } = await supabase
@@ -107,19 +116,13 @@ export const AdminGameManager = ({ games, onGamesUpdate }: AdminGameManagerProps
     }
   };
 
-  const handleGameUpdate = () => {
-    if (!currentGameId) return;
-    checkGameCompletion(currentGameId);
-    checkForWinner(currentGameId);
-  };
-
   return (
     <div className="space-y-8">
       <Card className="bg-gradient-to-br from-white to-purple-50">
         <CardContent className="pt-6">
           <NumberDrawing 
-            gameId={currentGameId} 
-            onNumberDrawn={handleGameUpdate}
+            gameId={currentGameId}
+            onDrawn={handleGameUpdate}
           />
         </CardContent>
       </Card>
