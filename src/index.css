@@ -75,6 +75,22 @@
   }
 }
 
+.animate-celebrate {
+  animation: celebrate 0.5s ease-out;
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .bingo-ball {
   @apply shadow-lg transition-all duration-300 ease-in-out;
   animation: scale-in 0.3s ease-out;

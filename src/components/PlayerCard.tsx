@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { BingoCell } from './bingo/BingoCell';
+import { BingoHeader } from './bingo/BingoHeader';
 
 interface BingoCell {
   number: number;
@@ -9,7 +11,7 @@ interface BingoCell {
 }
 
 interface PlayerCardProps {
-  numbers?: number[][];
+  numbers: number[][];
   preview?: boolean;
   markedNumbers?: number[];
   gameId?: string;
@@ -53,13 +55,12 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
       newCard.push(row);
     }
 
-    // Make center cell free
     newCard[2][2] = { number: 0, marked: true };
     setCard(newCard);
   };
 
   const toggleMark = async (rowIndex: number, colIndex: number) => {
-    if (preview || (rowIndex === 2 && colIndex === 2)) return; // Free space or preview mode
+    if (preview || (rowIndex === 2 && colIndex === 2)) return;
 
     const number = card[rowIndex][colIndex].number;
     const isMarked = card[rowIndex][colIndex].marked;
@@ -85,7 +86,6 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         return;
       }
 
-      // Update marked numbers in the database
       const { data: cardData } = await supabase
         .from('bingo_cards')
         .select('marked_numbers')
@@ -95,12 +95,9 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
 
       if (!cardData) return;
 
-      let newMarkedNumbers = [...cardData.marked_numbers];
-      if (isMarked) {
-        newMarkedNumbers = newMarkedNumbers.filter(n => n !== number);
-      } else {
-        newMarkedNumbers.push(number);
-      }
+      const newMarkedNumbers = isMarked
+        ? (cardData.marked_numbers as number[]).filter(n => n !== number)
+        : [...(cardData.marked_numbers as number[]), number];
 
       const { error: updateError } = await supabase
         .from('bingo_cards')
@@ -131,20 +128,10 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
   };
 
   const checkWin = () => {
-    // Check rows
-    const hasWinningRow = card.some(row => 
-      row.every(cell => cell.marked)
-    );
-
-    // Check columns
-    const hasWinningColumn = Array(5).fill(0).some((_, col) =>
-      card.every(row => row[col].marked)
-    );
-
-    // Check diagonals
+    const hasWinningRow = card.some(row => row.every(cell => cell.marked));
+    const hasWinningColumn = Array(5).fill(0).some((_, col) => card.every(row => row[col].marked));
     const hasWinningDiagonal = 
-      (card.every((row, i) => row[i].marked) || // Main diagonal
-       card.every((row, i) => row[4 - i].marked)); // Other diagonal
+      (card.every((row, i) => row[i].marked) || card.every((row, i) => row[4 - i].marked));
 
     if (hasWinningRow || hasWinningColumn || hasWinningDiagonal) {
       toast({
@@ -159,7 +146,9 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
     <div className={`container mx-auto p-4 ${preview ? 'max-w-sm' : 'max-w-lg'}`}>
       {!preview && (
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">Sua Cartela de Bingo</h1>
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">
+            Sua Cartela de Bingo
+          </h1>
           {!gameId && (
             <Button
               onClick={generateCard}
@@ -172,31 +161,21 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         </div>
       )}
 
-      <div className="grid gap-2 bg-card p-4 rounded-xl shadow-lg">
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {['B', 'I', 'N', 'G', 'O'].map(letter => (
-            <div
-              key={letter}
-              className="text-2xl font-bold text-center text-primary"
-            >
-              {letter}
-            </div>
+      <div className="bg-gradient-to-br from-card to-background rounded-xl shadow-xl p-6">
+        <BingoHeader />
+        <div className="grid grid-cols-5 gap-3">
+          {card.map((row, rowIndex) => (
+            row.map((cell, colIndex) => (
+              <BingoCell
+                key={`${rowIndex}-${colIndex}`}
+                number={cell.number}
+                marked={cell.marked}
+                preview={preview}
+                onClick={() => toggleMark(rowIndex, colIndex)}
+              />
+            ))
           ))}
         </div>
-
-        {card.map((row, rowIndex) => (
-          <div key={rowIndex} className="grid grid-cols-5 gap-2">
-            {row.map((cell, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                className={`bingo-cell ${cell.marked ? 'marked' : ''} ${preview ? 'cursor-default' : 'cursor-pointer'}`}
-                onClick={() => toggleMark(rowIndex, colIndex)}
-              >
-                {cell.number === 0 ? 'LIVRE' : cell.number}
-              </div>
-            ))}
-          </div>
-        ))}
       </div>
     </div>
   );
