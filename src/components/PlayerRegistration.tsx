@@ -78,7 +78,6 @@ export const PlayerRegistration = () => {
           providers={[]}
           theme="light"
           redirectTo={window.location.origin + '/game-selection'}
-          emailRedirectTo={window.location.origin + '/game-selection'}
         />
       </CardContent>
     </Card>
