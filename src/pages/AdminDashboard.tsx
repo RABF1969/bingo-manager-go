@@ -3,13 +3,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { NumberDrawing } from "@/components/NumberDrawing";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { GamesList } from "@/components/dashboard/GamesList";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface Player {
   name: string;
+  email: string;
+  phone: string | null;
 }
 
 interface WinnerCard {
@@ -35,6 +46,8 @@ interface Game {
 const AdminDashboard = () => {
   const { toast } = useToast();
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
+  const [showWinnerDialog, setShowWinnerDialog] = useState(false);
+  const [winner, setWinner] = useState<Player | null>(null);
 
   const { data: recentGames, refetch: refetchGames } = useQuery({
     queryKey: ['recentGames'],
@@ -44,7 +57,7 @@ const AdminDashboard = () => {
         .select(`
           *,
           winner_card:bingo_cards!inner(
-            player:profiles(name)
+            player:profiles(name, email, phone)
           ),
           drawn_numbers (
             number,
@@ -58,6 +71,36 @@ const AdminDashboard = () => {
       return data as Game[];
     },
   });
+
+  useEffect(() => {
+    const channel = supabase.channel('games')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'games',
+          filter: 'winner_card_id.is.not.null'
+        },
+        async (payload) => {
+          const { data: winnerData, error } = await supabase
+            .from('profiles')
+            .select('name, email, phone')
+            .eq('id', payload.new.winner_card_id)
+            .single();
+
+          if (!error && winnerData) {
+            setWinner(winnerData);
+            setShowWinnerDialog(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const handleCreateGame = async () => {
     try {
@@ -139,6 +182,34 @@ const AdminDashboard = () => {
             onSelectGame={selectGame}
           />
         </div>
+
+        <AlertDialog open={showWinnerDialog} onOpenChange={setShowWinnerDialog}>
+          <AlertDialogContent className="bg-gradient-to-br from-purple-100 to-pink-100">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-2xl font-bold text-center bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                🎉 BINGO! Temos um Vencedor! 🎉
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center space-y-4 mt-4">
+                <p className="text-xl font-semibold text-gray-800">
+                  {winner?.name}
+                </p>
+                <p className="text-gray-600">
+                  Email: {winner?.email}
+                </p>
+                {winner?.phone && (
+                  <p className="text-gray-600">
+                    Telefone: {winner?.phone}
+                  </p>
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                Fechar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
