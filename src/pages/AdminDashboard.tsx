@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Move interfaces to a separate types file
 interface Player {
   name: string;
   email: string;
@@ -41,6 +42,23 @@ const AdminDashboard = () => {
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [winner, setWinner] = useState<Player | null>(null);
   const [totalPlayers, setTotalPlayers] = useState(0);
+
+  // Add authentication check
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Acesso Negado",
+          description: "Você precisa estar logado para acessar o painel administrativo.",
+          variant: "destructive",
+        });
+        navigate('/');
+      }
+    };
+    
+    checkAuth();
+  }, [navigate, toast]);
 
   const { data: recentGames, refetch: refetchGames } = useQuery({
     queryKey: ['recentGames'],
@@ -164,18 +182,19 @@ const AdminDashboard = () => {
   }, [currentGameId, toast]);
 
   const handleCreateGame = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session) {
-        toast({
-          title: "Erro",
-          description: "Você precisa estar logado para criar um jogo.",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!session) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para criar um jogo.",
+        variant: "destructive",
+      });
+      navigate('/');
+      return;
+    }
 
+    try {
       const { data, error } = await supabase
         .from('games')
         .insert([
