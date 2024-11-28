@@ -2,10 +2,19 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { findNearWinners } from '@/utils/gameUtils';
+import { Json } from '@/integrations/supabase/types';
 
 interface NearWinner {
   playerName: string;
   missingNumbers: number[];
+}
+
+interface BingoCard {
+  numbers: number[][];
+  marked_numbers: number[];
+  player: {
+    name: string;
+  };
 }
 
 export const NearWinners = ({ gameId }: { gameId: string | null }) => {
@@ -15,7 +24,6 @@ export const NearWinners = ({ gameId }: { gameId: string | null }) => {
     if (!gameId) return;
 
     const checkNearWinners = async () => {
-      // Get all drawn numbers for this game
       const { data: drawnNumbers } = await supabase
         .from('drawn_numbers')
         .select('number')
@@ -23,7 +31,6 @@ export const NearWinners = ({ gameId }: { gameId: string | null }) => {
 
       const drawnSet = new Set(drawnNumbers?.map(d => d.number) || []);
 
-      // Get all cards for this game
       const { data: cards } = await supabase
         .from('bingo_cards')
         .select(`
@@ -35,7 +42,14 @@ export const NearWinners = ({ gameId }: { gameId: string | null }) => {
 
       if (!cards) return;
 
-      const newNearWinners = findNearWinners(cards, drawnSet);
+      // Convert JSON data to the correct type
+      const typedCards: BingoCard[] = cards.map(card => ({
+        numbers: card.numbers as number[][],
+        marked_numbers: card.marked_numbers as number[],
+        player: card.player as { name: string }
+      }));
+
+      const newNearWinners = findNearWinners(typedCards, drawnSet);
       setNearWinners(newNearWinners);
     };
 

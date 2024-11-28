@@ -10,6 +10,9 @@ import { NearWinners } from "@/components/dashboard/NearWinners";
 import { GameControls } from "@/components/dashboard/GameControls";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { isFullCardComplete } from "@/utils/gameUtils";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Player {
   name: string;
@@ -33,6 +36,7 @@ interface Game {
 
 const AdminDashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [winner, setWinner] = useState<Player | null>(null);
