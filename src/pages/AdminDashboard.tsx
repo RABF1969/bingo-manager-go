@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { NumberDrawing } from "@/components/NumberDrawing";
 import { useState, useEffect } from "react";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { StatCards } from "@/components/dashboard/StatCards";
 import { GamesList } from "@/components/dashboard/GamesList";
 import { WinnerDialog } from "@/components/dashboard/WinnerDialog";
 import { NearWinners } from "@/components/dashboard/NearWinners";
+import { GameControls } from "@/components/dashboard/GameControls";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
 
 interface Player {
   name: string;
@@ -20,11 +20,6 @@ interface WinnerCard {
   player: Player;
 }
 
-interface DrawnNumber {
-  number: number;
-  drawn_at: string;
-}
-
 interface Game {
   id: string;
   created_at: string;
@@ -33,7 +28,6 @@ interface Game {
   created_by: string;
   finished_at: string | null;
   winner_card: WinnerCard[];
-  drawn_numbers: DrawnNumber[];
 }
 
 const AdminDashboard = () => {
@@ -41,6 +35,11 @@ const AdminDashboard = () => {
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [winner, setWinner] = useState<Player | null>(null);
+  const [nearWinners, setNearWinners] = useState<Array<{
+    playerName: string;
+    missingNumbers: number[];
+  }>>([]);
+  const [totalPlayers, setTotalPlayers] = useState(0);
 
   const { data: recentGames, refetch: refetchGames } = useQuery({
     queryKey: ['recentGames'],
@@ -51,10 +50,6 @@ const AdminDashboard = () => {
           *,
           winner_card:bingo_cards!inner(
             player:profiles(name, email, phone)
-          ),
-          drawn_numbers (
-            number,
-            drawn_at
           )
         `)
         .order('created_at', { ascending: false })
@@ -64,6 +59,18 @@ const AdminDashboard = () => {
       return data as Game[];
     },
   });
+
+  useEffect(() => {
+    const fetchTotalPlayers = async () => {
+      const { count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      setTotalPlayers(count || 0);
+    };
+
+    fetchTotalPlayers();
+  }, []);
 
   useEffect(() => {
     if (!currentGameId) return;
@@ -227,22 +234,17 @@ const AdminDashboard = () => {
     });
   };
 
-  const lastDrawnNumber = recentGames?.[0]?.drawn_numbers?.[0];
-  const lastWinner = recentGames?.[0]?.winner_card?.[0]?.player?.name;
-  const ongoingGames = (recentGames || []).filter(game => game.status === 'waiting').length;
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
       <div className="container mx-auto max-w-7xl">
-        <DashboardHeader onCreateGame={handleCreateGame} />
+        <GameControls 
+          gameId={currentGameId}
+          onCreateGame={handleCreateGame}
+        />
         
-        <StatCards
-          totalPlayers={0}
-          lastDrawnNumber={lastDrawnNumber?.number}
-          lastDrawnTime={lastDrawnNumber?.drawn_at ? new Date(lastDrawnNumber.drawn_at).toLocaleString('pt-BR') : undefined}
-          lastWinner={lastWinner}
-          lastWinTime={recentGames?.[0]?.created_at ? new Date(recentGames[0].created_at).toLocaleString('pt-BR') : undefined}
-          ongoingGames={ongoingGames}
+        <DashboardStats
+          totalPlayers={totalPlayers}
+          nearWinners={nearWinners}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
