@@ -40,8 +40,8 @@ export const AdminDashboardContent = () => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [totalPlayers, setTotalPlayers] = useState(0);
 
-  const { data: recentGames, refetch: refetchGames } = useQuery({
-    queryKey: ['recentGames'],
+  const { data: games, refetch: refetchGames } = useQuery({
+    queryKey: ['games'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('games')
@@ -51,8 +51,7 @@ export const AdminDashboardContent = () => {
             player:profiles(name, email, phone)
           )
         `)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as Game[];
@@ -255,7 +254,7 @@ export const AdminDashboardContent = () => {
           </div>
 
           <GamesList 
-            games={recentGames || []} 
+            games={games || []} 
             onSelectGame={setCurrentGameId}
           />
         </div>
