@@ -14,7 +14,7 @@ interface Profile {
   name: string;
 }
 
-interface WinnerCard {
+interface BingoCard {
   player: Profile;
 }
 
@@ -23,7 +23,8 @@ interface Game {
   created_at: string;
   status: string;
   finished_at: string | null;
-  winner_card: WinnerCard | null;
+  winner_card_id: string | null;
+  bingo_cards: BingoCard[];
   drawn_numbers: DrawnNumber[];
 }
 
@@ -37,8 +38,8 @@ const AdminDashboard = () => {
         .from('games')
         .select(`
           *,
-          winner_card: bingo_cards!winner_card_id (
-            player: profiles (name)
+          bingo_cards!winner_card_id (
+            player:profiles(name)
           ),
           drawn_numbers (
             number,
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
         .limit(5);
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
@@ -110,7 +111,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {recentGames?.[0]?.winner_card?.player?.name || '-'}
+                {recentGames?.[0]?.bingo_cards?.[0]?.player?.name || '-'}
               </div>
               <p className="text-xs text-muted-foreground">
                 {recentGames?.[0]?.finished_at
@@ -157,9 +158,9 @@ const AdminDashboard = () => {
                       <p className="font-medium">
                         {game.status === 'waiting' ? 'Em andamento' : 'Finalizado'}
                       </p>
-                      {game.winner_card?.player?.name && (
+                      {game.bingo_cards?.[0]?.player?.name && (
                         <p className="text-sm text-muted-foreground">
-                          Ganhador: {game.winner_card.player.name}
+                          Ganhador: {game.bingo_cards[0].player.name}
                         </p>
                       )}
                     </div>
