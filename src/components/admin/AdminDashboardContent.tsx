@@ -74,6 +74,36 @@ export const AdminDashboardContent = () => {
   useEffect(() => {
     if (!currentGameId) return;
 
+    const checkGameCompletion = async () => {
+      // Get all drawn numbers for the current game
+      const { data: drawnNumbers } = await supabase
+        .from('drawn_numbers')
+        .select('number')
+        .eq('game_id', currentGameId);
+
+      if (!drawnNumbers) return;
+
+      // If all 75 numbers have been drawn, mark the game as finished
+      if (drawnNumbers.length === 75) {
+        const { error: updateError } = await supabase
+          .from('games')
+          .update({ 
+            status: 'finished',
+            finished_at: new Date().toISOString()
+          })
+          .eq('id', currentGameId)
+          .is('winner_card_id', null);
+
+        if (!updateError) {
+          toast({
+            title: "Jogo Encerrado",
+            description: "Todos os números foram sorteados!",
+          });
+          refetchGames();
+        }
+      }
+    };
+
     const checkForWinner = async () => {
       // Get all drawn numbers for the current game
       const { data: drawnNumbers } = await supabase
@@ -137,7 +167,10 @@ export const AdminDashboardContent = () => {
           table: 'drawn_numbers',
           filter: `game_id=eq.${currentGameId}`
         },
-        () => checkForWinner()
+        () => {
+          checkGameCompletion();
+          checkForWinner();
+        }
       )
       .subscribe();
 
