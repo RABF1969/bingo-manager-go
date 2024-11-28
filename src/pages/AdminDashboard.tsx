@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Hash, Clock, Users, Plus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { NumberDrawing } from "@/components/NumberDrawing";
+import { useState } from "react";
 
 interface Profile {
   name: string;
@@ -33,8 +35,9 @@ interface Game {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [currentGameId, setCurrentGameId] = useState<string | null>(null);
 
-  const { data: recentGames } = useQuery({
+  const { data: recentGames, refetch: refetchGames } = useQuery({
     queryKey: ['recentGames'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -100,8 +103,8 @@ const AdminDashboard = () => {
         description: "Novo jogo criado com sucesso.",
       });
 
-      // Aqui você pode redirecionar para a página do jogo se desejar
-      // navigate(`/game/${data.id}`);
+      setCurrentGameId(data.id);
+      refetchGames();
     } catch (error) {
       toast({
         title: "Erro ao criar jogo",
@@ -109,6 +112,14 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const selectGame = (gameId: string) => {
+    setCurrentGameId(gameId);
+    toast({
+      title: "Jogo Selecionado",
+      description: "Você pode começar a sortear os números agora.",
+    });
   };
 
   return (
@@ -185,7 +196,16 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sorteio de Números</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <NumberDrawing gameId={currentGameId} />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Últimos Jogos</CardTitle>
@@ -195,7 +215,8 @@ const AdminDashboard = () => {
                 {(recentGames as Game[] || []).map((game) => (
                   <div
                     key={game.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer"
+                    onClick={() => selectGame(game.id)}
                   >
                     <div>
                       <p className="font-medium">
