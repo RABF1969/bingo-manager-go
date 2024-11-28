@@ -27,6 +27,33 @@ export const NumberDrawing = ({ gameId }: NumberDrawingProps) => {
     audio.load();
   }, [audio]);
 
+  useEffect(() => {
+    // Load existing drawn numbers when gameId changes
+    const loadDrawnNumbers = async () => {
+      if (!gameId) return;
+      
+      const { data, error } = await supabase
+        .from('drawn_numbers')
+        .select('number, drawn_at')
+        .eq('game_id', gameId)
+        .order('drawn_at', { ascending: true });
+
+      if (error) {
+        console.error('Error loading drawn numbers:', error);
+        return;
+      }
+
+      if (data) {
+        setDrawnNumbers(data.map(d => ({
+          number: d.number,
+          timestamp: new Date(d.drawn_at)
+        })));
+      }
+    };
+
+    loadDrawnNumbers();
+  }, [gameId]);
+
   const playNumberSound = async () => {
     try {
       await audio.play();
@@ -70,7 +97,17 @@ export const NumberDrawing = ({ gameId }: NumberDrawingProps) => {
           }
         ]);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '23505') {
+          toast({
+            title: "Número já sorteado",
+            description: `O número ${newNumber} já foi sorteado neste jogo.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       setCurrentNumber(newNumber);
       setDrawnNumbers(prev => [...prev, { number: newNumber, timestamp: new Date() }]);
