@@ -6,7 +6,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { NumberDrawing } from "@/components/NumberDrawing";
 import { GamesList } from "@/components/dashboard/GamesList";
 import { WinnerDialog } from "@/components/dashboard/WinnerDialog";
-import { NearWinners } from "@/components/dashboard/NearWinners";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -226,7 +225,7 @@ export const AdminDashboardContent = () => {
           </div>
         </div>
         
-        <DashboardStats totalPlayers={totalPlayers} />
+        <DashboardStats totalPlayers={totalPlayers} gameId={currentGameId} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-8">
@@ -235,7 +234,6 @@ export const AdminDashboardContent = () => {
                 <NumberDrawing gameId={currentGameId} />
               </CardContent>
             </Card>
-            <NearWinners gameId={currentGameId} />
           </div>
 
           <GamesList 
