@@ -10,7 +10,7 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { isFullCardComplete } from "@/utils/gameUtils";
+import { isCardComplete } from "@/utils/winnerUtils";
 
 interface Player {
   name: string;
@@ -75,30 +75,35 @@ export const AdminDashboardContent = () => {
     if (!currentGameId) return;
 
     const checkForWinner = async () => {
+      // Get all drawn numbers for the current game
       const { data: drawnNumbers } = await supabase
         .from('drawn_numbers')
         .select('number')
         .eq('game_id', currentGameId);
 
-      const drawnSet = new Set(drawnNumbers?.map(d => d.number) || []);
+      if (!drawnNumbers || drawnNumbers.length === 0) return;
 
+      const drawnSet = new Set(drawnNumbers.map(d => d.number));
+
+      // Get all selected cards for the current game
       const { data: cards } = await supabase
         .from('bingo_cards')
         .select(`
           id,
           numbers,
-          marked_numbers,
           player:profiles(id, name, email, phone)
         `)
-        .eq('game_id', currentGameId);
+        .eq('game_id', currentGameId)
+        .eq('selected', true);
 
       if (!cards) return;
 
+      // Check each card for a winner
       for (const card of cards) {
         const numbers = card.numbers as number[][];
-        const markedNumbers = new Set(card.marked_numbers as number[]);
-
-        if (isFullCardComplete(numbers, markedNumbers, drawnSet)) {
+        
+        if (isCardComplete(numbers, drawnSet)) {
+          // Update game with winner
           const { error: updateError } = await supabase
             .from('games')
             .update({ 
@@ -116,6 +121,7 @@ export const AdminDashboardContent = () => {
               title: "Bingo!",
               description: `${card.player.name} completou a cartela!`,
             });
+            refetchGames();
           }
           break;
         }
@@ -133,33 +139,12 @@ export const AdminDashboardContent = () => {
         },
         () => checkForWinner()
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'games',
-          filter: `id=eq.${currentGameId} and winner_card_id.is.not.null`
-        },
-        async (payload) => {
-          const { data: winnerData, error } = await supabase
-            .from('profiles')
-            .select('name, email, phone')
-            .eq('id', payload.new.winner_card_id)
-            .single();
-
-          if (!error && winnerData) {
-            setWinner(winnerData);
-            setShowWinnerDialog(true);
-          }
-        }
-      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentGameId, toast]);
+  }, [currentGameId, toast, refetchGames]);
 
   const handleCreateGame = async () => {
     const { data: { session } } = await supabase.auth.getSession();
