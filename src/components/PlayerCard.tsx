@@ -161,7 +161,7 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
   };
 
   return (
-    <div className={`container mx-auto p-4 ${preview ? 'max-w-sm' : 'max-w-lg'}`}>
+    <div className={`container mx-auto p-4 ${preview ? 'max-w-sm' : 'max-w-xl'}`}>
       {!preview && (
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-transparent bg-clip-text">
@@ -179,9 +179,9 @@ export const PlayerCard = ({ numbers: initialNumbers, preview = false, markedNum
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-950 dark:to-fuchsia-950 rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-all duration-300">
+      <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-950 dark:to-fuchsia-950 rounded-xl shadow-xl p-8 transform hover:scale-[1.02] transition-all duration-300">
         <BingoHeader />
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-5 gap-4">
           {card.map((row, rowIndex) => (
             row.map((cell, colIndex) => (
               <BingoCell
