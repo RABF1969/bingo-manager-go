@@ -7,13 +7,24 @@ interface BingoCell {
   marked: boolean;
 }
 
-export const PlayerCard = () => {
+interface PlayerCardProps {
+  numbers?: number[][];
+  preview?: boolean;
+}
+
+export const PlayerCard = ({ numbers: initialNumbers, preview = false }: PlayerCardProps) => {
   const [card, setCard] = useState<BingoCell[][]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    generateCard();
-  }, []);
+    if (initialNumbers) {
+      setCard(initialNumbers.map(row => 
+        row.map(number => ({ number, marked: number === 0 }))
+      ));
+    } else {
+      generateCard();
+    }
+  }, [initialNumbers]);
 
   const generateCard = () => {
     const newCard: BingoCell[][] = [];
@@ -42,7 +53,7 @@ export const PlayerCard = () => {
   };
 
   const toggleMark = (rowIndex: number, colIndex: number) => {
-    if (rowIndex === 2 && colIndex === 2) return; // Free space
+    if (preview || rowIndex === 2 && colIndex === 2) return; // Free space or preview mode
 
     setCard(prev => {
       const newCard = [...prev];
@@ -83,17 +94,19 @@ export const PlayerCard = () => {
   };
 
   return (
-    <div className="container mx-auto p-8 max-w-lg">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2">Sua Cartela de Bingo</h1>
-        <Button
-          onClick={generateCard}
-          variant="outline"
-          className="mt-4"
-        >
-          Nova Cartela
-        </Button>
-      </div>
+    <div className={`container mx-auto p-4 ${preview ? 'max-w-sm' : 'max-w-lg'}`}>
+      {!preview && (
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold mb-2">Sua Cartela de Bingo</h1>
+          <Button
+            onClick={generateCard}
+            variant="outline"
+            className="mt-4"
+          >
+            Nova Cartela
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-2 bg-card p-4 rounded-xl shadow-lg">
         <div className="grid grid-cols-5 gap-2 mb-4">
@@ -112,7 +125,7 @@ export const PlayerCard = () => {
             {row.map((cell, colIndex) => (
               <div
                 key={`${rowIndex}-${colIndex}`}
-                className={`bingo-cell ${cell.marked ? 'marked' : ''}`}
+                className={`bingo-cell ${cell.marked ? 'marked' : ''} ${preview ? 'cursor-default' : 'cursor-pointer'}`}
                 onClick={() => toggleMark(rowIndex, colIndex)}
               >
                 {cell.number === 0 ? 'LIVRE' : cell.number}

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { PlayerCard } from "@/components/PlayerCard";
 
 interface Game {
   id: string;
@@ -11,11 +12,19 @@ interface Game {
   created_at: string;
 }
 
+interface BingoCard {
+  id: string;
+  numbers: number[][];
+}
+
 const GameSelection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  const [availableCards, setAvailableCards] = useState<BingoCard[]>([]);
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -51,7 +60,61 @@ const GameSelection = () => {
     }
   };
 
-  const joinGame = async (gameId: string) => {
+  const generateCards = () => {
+    const cards: BingoCard[] = [];
+    for (let i = 0; i < 3; i++) { // Generate 3 cards to choose from
+      const numbers: number[][] = [];
+      const usedNumbers = new Set<number>();
+
+      for (let row = 0; row < 5; row++) {
+        const rowNumbers: number[] = [];
+        const min = row * 15 + 1;
+        const max = min + 14;
+
+        for (let col = 0; col < 5; col++) {
+          let number;
+          do {
+            number = Math.floor(Math.random() * (max - min + 1)) + min;
+          } while (usedNumbers.has(number));
+
+          usedNumbers.add(number);
+          rowNumbers.push(number);
+        }
+        numbers.push(rowNumbers);
+      }
+
+      // Make center cell free
+      numbers[2][2] = 0;
+
+      cards.push({
+        id: `card-${i + 1}`,
+        numbers: numbers,
+      });
+    }
+    return cards;
+  };
+
+  const handleGameSelect = async (gameId: string) => {
+    setSelectedGame(gameId);
+    const cards = generateCards();
+    setAvailableCards(cards);
+    setSelectedCard(null);
+  };
+
+  const handleCardSelect = (cardId: string) => {
+    setSelectedCard(cardId);
+  };
+
+  const joinGame = async () => {
+    if (!selectedGame || !selectedCard) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma cartela primeiro.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -59,24 +122,20 @@ const GameSelection = () => {
         return;
       }
 
-      // Gerar uma cartela aleatória (5x5)
-      const numbers = Array.from({ length: 25 }, (_, i) => i + 1)
-        .sort(() => Math.random() - 0.5)
-        .reduce((acc, num, idx) => {
-          const row = Math.floor(idx / 5);
-          if (!acc[row]) acc[row] = [];
-          acc[row].push(num);
-          return acc;
-        }, [] as number[][]);
+      const selectedCardData = availableCards.find(card => card.id === selectedCard);
+      if (!selectedCardData) {
+        throw new Error("Cartela não encontrada");
+      }
 
       const { error } = await supabase
         .from('bingo_cards')
         .insert([
           {
-            game_id: gameId,
+            game_id: selectedGame,
             player_id: session.user.id,
-            numbers: numbers,
-            marked_numbers: []
+            numbers: selectedCardData.numbers,
+            marked_numbers: [],
+            selected: true
           }
         ]);
 
@@ -87,8 +146,7 @@ const GameSelection = () => {
         description: "Você entrou no jogo com sucesso.",
       });
 
-      // Aqui você pode redirecionar para a página do jogo
-      // navigate(`/game/${gameId}`);
+      navigate('/player');
     } catch (error) {
       toast({
         title: "Erro ao entrar no jogo",
@@ -120,21 +178,60 @@ const GameSelection = () => {
               </p>
             ) : games.length > 0 ? (
               <div className="space-y-4">
-                {games.map((game) => (
-                  <Card key={game.id} className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">Jogo #{game.id.slice(0, 8)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Criado em: {new Date(game.created_at).toLocaleString('pt-BR')}
-                        </p>
+                {!selectedGame ? (
+                  games.map((game) => (
+                    <Card key={game.id} className="p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">Jogo #{game.id.slice(0, 8)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Criado em: {new Date(game.created_at).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                        <Button onClick={() => handleGameSelect(game.id)}>
+                          Selecionar
+                        </Button>
                       </div>
-                      <Button onClick={() => joinGame(game.id)}>
-                        Participar
+                    </Card>
+                  ))
+                ) : (
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-xl font-semibold">Escolha sua cartela</h3>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setSelectedGame(null);
+                          setAvailableCards([]);
+                          setSelectedCard(null);
+                        }}
+                      >
+                        Voltar
                       </Button>
                     </div>
-                  </Card>
-                ))}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {availableCards.map((card) => (
+                        <div 
+                          key={card.id}
+                          className={`cursor-pointer transition-all transform hover:scale-105 ${
+                            selectedCard === card.id ? 'ring-2 ring-primary' : ''
+                          }`}
+                          onClick={() => handleCardSelect(card.id)}
+                        >
+                          <PlayerCard numbers={card.numbers} preview />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-center">
+                      <Button 
+                        onClick={joinGame}
+                        disabled={!selectedCard}
+                      >
+                        Confirmar Seleção
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-center text-muted-foreground">
