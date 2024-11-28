@@ -5,10 +5,32 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Hash, Clock, Users } from "lucide-react";
 
+interface DrawnNumber {
+  number: number;
+  drawn_at: string;
+}
+
+interface Profile {
+  name: string;
+}
+
+interface WinnerCard {
+  player: Profile;
+}
+
+interface Game {
+  id: string;
+  created_at: string;
+  status: string;
+  finished_at: string | null;
+  winner_card: WinnerCard | null;
+  drawn_numbers: DrawnNumber[];
+}
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
-  const { data: recentGames } = useQuery({
+  const { data: recentGames } = useQuery<Game[]>({
     queryKey: ['recentGames'],
     queryFn: async () => {
       const { data, error } = await supabase
