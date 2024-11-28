@@ -5,13 +5,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Hash, Clock, Users } from "lucide-react";
 
+interface Profile {
+  name: string;
+}
+
 interface DrawnNumber {
   number: number;
   drawn_at: string;
-}
-
-interface Profile {
-  name: string;
 }
 
 interface BingoCard {
@@ -24,7 +24,7 @@ interface Game {
   status: string;
   finished_at: string | null;
   winner_card_id: string | null;
-  winner_card: BingoCard;
+  winner_card: BingoCard | null;
   drawn_numbers: DrawnNumber[];
 }
 
@@ -50,7 +50,7 @@ const AdminDashboard = () => {
         .limit(5);
 
       if (error) throw error;
-      return data || [];
+      return (data || []) as Game[];
     },
   });
 
