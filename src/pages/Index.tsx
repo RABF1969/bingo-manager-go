@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { AdminDashboard } from "@/components/AdminDashboard";
-import { PlayerCard } from "@/components/PlayerCard";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [mode, setMode] = useState<'admin' | 'player' | null>(null);
+  const navigate = useNavigate();
 
   if (!mode) {
     return (
@@ -23,7 +24,7 @@ const Index = () => {
             Administrador
           </Button>
           <Button
-            onClick={() => setMode('player')}
+            onClick={() => navigate('/player')}
             className="px-8 py-6 text-lg"
             variant="default"
           >
@@ -45,7 +46,7 @@ const Index = () => {
           Voltar para Seleção de Papel
         </Button>
       </div>
-      {mode === 'admin' ? <AdminDashboard /> : <PlayerCard />}
+      <AdminDashboard />
     </div>
   );
 };
