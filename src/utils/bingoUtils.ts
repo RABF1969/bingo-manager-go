@@ -3,18 +3,8 @@ export const checkWinningPattern = (card: { number: number; marked: boolean; }[]
   const isValidMark = (cell: { number: number; marked: boolean }) => 
     cell.number === 0 || (cell.marked && drawnNumbers.has(cell.number));
 
-  // Verifica linhas
-  const hasWinningRow = card.some(row => row.every(isValidMark));
-  
-  // Verifica colunas
-  const hasWinningColumn = Array(5).fill(0).some((_, col) => 
-    card.every(row => isValidMark(row[col]))
+  // Verifica se toda a cartela está preenchida (exceto o centro que é livre)
+  return card.every(row => 
+    row.every(cell => isValidMark(cell))
   );
-  
-  // Verifica diagonais
-  const hasWinningDiagonal = 
-    card.every((row, i) => isValidMark(row[i])) || // diagonal principal
-    card.every((row, i) => isValidMark(row[4 - i])); // diagonal secundária
-
-  return hasWinningRow || hasWinningColumn || hasWinningDiagonal;
 };
