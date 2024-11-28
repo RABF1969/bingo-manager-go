@@ -25,12 +25,14 @@ const GameSelection = () => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [availableCards, setAvailableCards] = useState<BingoCard[]>([]);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [joiningGame, setJoiningGame] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate('/player');
+        return;
       }
     };
 
@@ -62,7 +64,7 @@ const GameSelection = () => {
 
   const generateCards = () => {
     const cards: BingoCard[] = [];
-    for (let i = 0; i < 3; i++) { // Generate 3 cards to choose from
+    for (let i = 0; i < 3; i++) {
       const numbers: number[][] = [];
       const usedNumbers = new Set<number>();
 
@@ -83,7 +85,6 @@ const GameSelection = () => {
         numbers.push(rowNumbers);
       }
 
-      // Make center cell free
       numbers[2][2] = 0;
 
       cards.push({
@@ -115,6 +116,8 @@ const GameSelection = () => {
       return;
     }
 
+    setJoiningGame(true);
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -127,7 +130,24 @@ const GameSelection = () => {
         throw new Error("Cartela não encontrada");
       }
 
-      const { error } = await supabase
+      // Check if player already has a card in this game
+      const { data: existingCard } = await supabase
+        .from('bingo_cards')
+        .select('id')
+        .eq('game_id', selectedGame)
+        .eq('player_id', session.user.id)
+        .single();
+
+      if (existingCard) {
+        toast({
+          title: "Erro",
+          description: "Você já possui uma cartela neste jogo.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error: insertError } = await supabase
         .from('bingo_cards')
         .insert([
           {
@@ -139,7 +159,9 @@ const GameSelection = () => {
           }
         ]);
 
-      if (error) throw error;
+      if (insertError) {
+        throw insertError;
+      }
 
       toast({
         title: "Sucesso!",
@@ -147,12 +169,15 @@ const GameSelection = () => {
       });
 
       navigate('/player');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error joining game:', error);
       toast({
         title: "Erro ao entrar no jogo",
-        description: "Não foi possível entrar no jogo selecionado.",
+        description: error.message || "Não foi possível entrar no jogo selecionado.",
         variant: "destructive"
       });
+    } finally {
+      setJoiningGame(false);
     }
   };
 
@@ -225,9 +250,9 @@ const GameSelection = () => {
                     <div className="flex justify-center">
                       <Button 
                         onClick={joinGame}
-                        disabled={!selectedCard}
+                        disabled={!selectedCard || joiningGame}
                       >
-                        Confirmar Seleção
+                        {joiningGame ? 'Entrando...' : 'Confirmar Seleção'}
                       </Button>
                     </div>
                   </div>
