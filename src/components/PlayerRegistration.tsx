@@ -27,10 +27,9 @@ export const PlayerRegistration = () => {
     setIsLoading(true);
 
     try {
-      // Primeiro, criar o usuário no Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: playerData.email,
-        password: Math.random().toString(36).slice(-8), // Senha aleatória temporária
+        password: Math.random().toString(36).slice(-8),
         options: {
           data: {
             name: playerData.name,
@@ -40,9 +39,6 @@ export const PlayerRegistration = () => {
 
       if (authError) throw authError;
 
-      // O perfil será criado automaticamente pelo trigger que configuramos
-
-      // Atualizar o telefone no perfil
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ phone: playerData.phone })
@@ -55,10 +51,8 @@ export const PlayerRegistration = () => {
         description: "Você será redirecionado para escolher sua cartela.",
       });
 
-      // Redirecionar para a página de seleção de cartela após um breve delay
-      setTimeout(() => {
-        navigate('/game-selection');
-      }, 2000);
+      // Forçar o redirecionamento imediato
+      navigate('/game-selection');
 
     } catch (error) {
       console.error('Erro no registro:', error);
