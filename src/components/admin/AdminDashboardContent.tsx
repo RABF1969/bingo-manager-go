@@ -1,3 +1,4 @@
+// First, let's split the large file into smaller components
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { isCardComplete } from "@/utils/winnerUtils";
+import { AdminGameManager } from "@/components/admin/AdminGameManager";
 
 interface Player {
   name: string;
@@ -18,26 +19,9 @@ interface Player {
   phone: string | null;
 }
 
-interface WinnerCard {
-  player: Player;
-}
-
-interface Game {
-  id: string;
-  created_at: string;
-  status: string;
-  winner_card_id: string | null;
-  created_by: string;
-  finished_at: string | null;
-  winner_card: WinnerCard[];
-}
-
 export const AdminDashboardContent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [currentGameId, setCurrentGameId] = useState<string | null>(null);
-  const [showWinnerDialog, setShowWinnerDialog] = useState(false);
-  const [winner, setWinner] = useState<Player | null>(null);
   const [totalPlayers, setTotalPlayers] = useState(0);
 
   const { data: games, refetch: refetchGames } = useQuery({
@@ -54,7 +38,7 @@ export const AdminDashboardContent = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Game[];
+      return data;
     },
   });
 
@@ -69,114 +53,6 @@ export const AdminDashboardContent = () => {
 
     fetchTotalPlayers();
   }, []);
-
-  useEffect(() => {
-    if (!currentGameId) return;
-
-    const checkGameCompletion = async () => {
-      // Get all drawn numbers for the current game
-      const { data: drawnNumbers } = await supabase
-        .from('drawn_numbers')
-        .select('number')
-        .eq('game_id', currentGameId);
-
-      if (!drawnNumbers) return;
-
-      // If all 75 numbers have been drawn, mark the game as finished
-      if (drawnNumbers.length === 75) {
-        const { error: updateError } = await supabase
-          .from('games')
-          .update({ 
-            status: 'finished',
-            finished_at: new Date().toISOString()
-          })
-          .eq('id', currentGameId)
-          .is('winner_card_id', null);
-
-        if (!updateError) {
-          toast({
-            title: "Jogo Encerrado",
-            description: "Todos os números foram sorteados!",
-          });
-          refetchGames();
-        }
-      }
-    };
-
-    const checkForWinner = async () => {
-      // Get all drawn numbers for the current game
-      const { data: drawnNumbers } = await supabase
-        .from('drawn_numbers')
-        .select('number')
-        .eq('game_id', currentGameId);
-
-      if (!drawnNumbers || drawnNumbers.length === 0) return;
-
-      const drawnSet = new Set(drawnNumbers.map(d => d.number));
-
-      // Get all selected cards for the current game
-      const { data: cards } = await supabase
-        .from('bingo_cards')
-        .select(`
-          id,
-          numbers,
-          player:profiles(id, name, email, phone)
-        `)
-        .eq('game_id', currentGameId)
-        .eq('selected', true);
-
-      if (!cards) return;
-
-      // Check each card for a winner
-      for (const card of cards) {
-        const numbers = card.numbers as number[][];
-        
-        if (isCardComplete(numbers, drawnSet)) {
-          // Update game with winner
-          const { error: updateError } = await supabase
-            .from('games')
-            .update({ 
-              winner_card_id: card.id,
-              status: 'finished',
-              finished_at: new Date().toISOString()
-            })
-            .eq('id', currentGameId)
-            .is('winner_card_id', null);
-
-          if (!updateError) {
-            setWinner(card.player as Player);
-            setShowWinnerDialog(true);
-            toast({
-              title: "Bingo!",
-              description: `${card.player.name} completou a cartela!`,
-            });
-            refetchGames();
-          }
-          break;
-        }
-      }
-    };
-
-    const channel = supabase.channel(`game-${currentGameId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'drawn_numbers',
-          filter: `game_id=eq.${currentGameId}`
-        },
-        () => {
-          checkGameCompletion();
-          checkForWinner();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentGameId, toast, refetchGames]);
 
   const handleCreateGame = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -210,7 +86,6 @@ export const AdminDashboardContent = () => {
         description: "Novo jogo criado com sucesso.",
       });
 
-      setCurrentGameId(data.id);
       refetchGames();
     } catch (error) {
       toast({
@@ -242,28 +117,14 @@ export const AdminDashboardContent = () => {
           </div>
         </div>
         
-        <DashboardStats totalPlayers={totalPlayers} gameId={currentGameId} />
+        <DashboardStats totalPlayers={totalPlayers} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-8">
-            <Card className="bg-gradient-to-br from-white to-purple-50">
-              <CardContent className="pt-6">
-                <NumberDrawing gameId={currentGameId} />
-              </CardContent>
-            </Card>
-          </div>
-
+          <AdminGameManager games={games || []} onGamesUpdate={refetchGames} />
           <GamesList 
             games={games || []} 
-            onSelectGame={setCurrentGameId}
           />
         </div>
-
-        <WinnerDialog
-          open={showWinnerDialog}
-          onOpenChange={setShowWinnerDialog}
-          winner={winner}
-        />
       </div>
     </div>
   );

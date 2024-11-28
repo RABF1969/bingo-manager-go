@@ -4,29 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { GameCard } from "@/components/game-selection/GameCard";
-import { CardSelectionCarousel } from "@/components/game-selection/CardSelectionCarousel";
-
-interface Game {
-  id: string;
-  status: string;
-  created_at: string;
-}
-
-interface BingoCard {
-  id: string;
-  numbers: number[][];
-}
+import { GameSelectionList } from '@/components/game-selection/GameSelectionList';
+import { CardSelectionView } from '@/components/game-selection/CardSelectionView';
 
 const GameSelection = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [games, setGames] = useState<Game[]>([]);
+  const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGame, setSelectedGame] = useState<string | null>(null);
-  const [availableCards, setAvailableCards] = useState<BingoCard[]>([]);
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const [joiningGame, setJoiningGame] = useState(false);
+  const [selectedGame, setSelectedGame] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -62,143 +48,6 @@ const GameSelection = () => {
     }
   };
 
-  const generateCards = () => {
-    const cards: BingoCard[] = [];
-    for (let i = 0; i < 5; i++) { // Increased from 3 to 5 cards
-      const numbers: number[][] = Array(5).fill(null).map(() => Array(5).fill(0));
-      
-      // Define column ranges (B: 1-15, I: 16-30, N: 31-45, G: 46-60, O: 61-75)
-      const ranges = [
-        { min: 1, max: 15 },
-        { min: 16, max: 30 },
-        { min: 31, max: 45 },
-        { min: 46, max: 60 },
-        { min: 61, max: 75 }
-      ];
-
-      // Generate numbers for each column
-      for (let col = 0; col < 5; col++) {
-        const { min, max } = ranges[col];
-        const columnNumbers = [];
-        
-        // Generate 5 unique numbers for each column
-        while (columnNumbers.length < 5) {
-          const num = Math.floor(Math.random() * (max - min + 1)) + min;
-          if (!columnNumbers.includes(num)) {
-            columnNumbers.push(num);
-          }
-        }
-        
-        // Sort numbers in ascending order
-        columnNumbers.sort((a, b) => a - b);
-        
-        // Assign sorted numbers to the column
-        for (let row = 0; row < 5; row++) {
-          numbers[row][col] = columnNumbers[row];
-        }
-      }
-
-      // Set center as FREE
-      numbers[2][2] = 0;
-      
-      cards.push({
-        id: `card-${i + 1}`,
-        numbers: numbers,
-      });
-    }
-    return cards;
-  };
-
-  const handleGameSelect = async (gameId: string) => {
-    setSelectedGame(gameId);
-    
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/player');
-      return;
-    }
-
-    const { data: existingCard } = await supabase
-      .from('bingo_cards')
-      .select('*')
-      .eq('game_id', gameId)
-      .eq('player_id', session.user.id)
-      .single();
-
-    if (existingCard) {
-      toast({
-        title: "Cartela encontrada",
-        description: "Você já possui uma cartela neste jogo. Redirecionando para sua cartela...",
-      });
-      navigate('/player', { state: { gameId } });
-      return;
-    }
-
-    const cards = generateCards();
-    setAvailableCards(cards);
-    setSelectedCard(null);
-  };
-
-  const handleCardSelect = (cardId: string) => {
-    setSelectedCard(cardId);
-  };
-
-  const joinGame = async () => {
-    if (!selectedGame || !selectedCard) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione uma cartela primeiro.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setJoiningGame(true);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/player');
-        return;
-      }
-
-      const selectedCardData = availableCards.find(card => card.id === selectedCard);
-      if (!selectedCardData) {
-        throw new Error("Cartela não encontrada");
-      }
-
-      const { error: insertError } = await supabase
-        .from('bingo_cards')
-        .insert([
-          {
-            game_id: selectedGame,
-            player_id: session.user.id,
-            numbers: selectedCardData.numbers,
-            marked_numbers: [],
-            selected: true
-          }
-        ]);
-
-      if (insertError) throw insertError;
-
-      toast({
-        title: "Sucesso!",
-        description: "Você entrou no jogo com sucesso.",
-      });
-
-      navigate('/player', { state: { gameId: selectedGame } });
-    } catch (error: any) {
-      console.error('Error joining game:', error);
-      toast({
-        title: "Erro ao entrar no jogo",
-        description: error.message || "Não foi possível entrar no jogo selecionado.",
-        variant: "destructive"
-      });
-    } finally {
-      setJoiningGame(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="container mx-auto max-w-6xl">
@@ -225,52 +74,15 @@ const GameSelection = () => {
             ) : games.length > 0 ? (
               <div className="space-y-6">
                 {!selectedGame ? (
-                  <div className="grid gap-4">
-                    {games.map((game) => (
-                      <GameCard
-                        key={game.id}
-                        id={game.id}
-                        createdAt={game.created_at}
-                        status={game.status}
-                        onSelect={handleGameSelect}
-                      />
-                    ))}
-                  </div>
+                  <GameSelectionList 
+                    games={games}
+                    onGameSelect={setSelectedGame}
+                  />
                 ) : (
-                  <div className="space-y-8">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-2xl font-semibold bg-gradient-to-r from-violet-500 to-fuchsia-500 text-transparent bg-clip-text">
-                        Escolha sua cartela
-                      </h3>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setSelectedGame(null);
-                          setAvailableCards([]);
-                          setSelectedCard(null);
-                        }}
-                        className="hover:bg-primary/10"
-                      >
-                        Voltar
-                      </Button>
-                    </div>
-                    
-                    <CardSelectionCarousel
-                      availableCards={availableCards}
-                      selectedCard={selectedCard}
-                      onCardSelect={handleCardSelect}
-                    />
-
-                    <div className="flex justify-center pt-6">
-                      <Button 
-                        onClick={joinGame}
-                        disabled={!selectedCard || joiningGame}
-                        className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 px-8 py-2 text-lg"
-                      >
-                        {joiningGame ? 'Entrando...' : 'Confirmar Seleção'}
-                      </Button>
-                    </div>
-                  </div>
+                  <CardSelectionView
+                    gameId={selectedGame}
+                    onBack={() => setSelectedGame(null)}
+                  />
                 )}
               </div>
             ) : (
