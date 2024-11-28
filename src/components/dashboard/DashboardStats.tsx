@@ -20,7 +20,11 @@ export const DashboardStats = ({ totalPlayers, gameId }: DashboardStatsProps) =>
         </CardContent>
       </Card>
 
-      {gameId && <NearWinners gameId={gameId} />}
+      {gameId && (
+        <div className="w-full">
+          <NearWinners gameId={gameId} />
+        </div>
+      )}
     </div>
   );
 };
