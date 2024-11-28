@@ -8,19 +8,26 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { GamesList } from "@/components/dashboard/GamesList";
 
+interface WinnerCard {
+  player: {
+    name: string;
+  };
+}
+
+interface DrawnNumber {
+  number: number;
+  drawn_at: string;
+}
+
 interface Game {
   id: string;
   created_at: string;
   status: string;
-  winner_card?: {
-    player: {
-      name: string;
-    };
-  };
-  drawn_numbers: {
-    number: number;
-    drawn_at: string;
-  }[];
+  winner_card_id: string | null;
+  created_by: string;
+  finished_at: string | null;
+  winner_card?: WinnerCard[];
+  drawn_numbers: DrawnNumber[];
 }
 
 const AdminDashboard = () => {
@@ -46,19 +53,7 @@ const AdminDashboard = () => {
         .limit(5);
 
       if (error) throw error;
-      return (data || []) as Game[];
-    },
-  });
-
-  const { data: totalPlayers } = useQuery({
-    queryKey: ['totalPlayers'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      if (error) throw error;
-      return count;
+      return data as Game[];
     },
   });
 
@@ -113,7 +108,7 @@ const AdminDashboard = () => {
   };
 
   const lastDrawnNumber = recentGames?.[0]?.drawn_numbers?.[0];
-  const lastWinner = recentGames?.[0]?.winner_card?.player?.name;
+  const lastWinner = recentGames?.[0]?.winner_card?.[0]?.player?.name;
   const ongoingGames = (recentGames || []).filter(game => game.status === 'waiting').length;
 
   return (
@@ -122,7 +117,7 @@ const AdminDashboard = () => {
         <DashboardHeader onCreateGame={handleCreateGame} />
         
         <StatCards
-          totalPlayers={totalPlayers || 0}
+          totalPlayers={0}
           lastDrawnNumber={lastDrawnNumber?.number}
           lastDrawnTime={lastDrawnNumber?.drawn_at ? new Date(lastDrawnNumber.drawn_at).toLocaleString('pt-BR') : undefined}
           lastWinner={lastWinner}
