@@ -76,6 +76,23 @@ export const CardSelectionView = ({ gameId, onBack }: CardSelectionViewProps) =>
         return;
       }
 
+      // Check if player already has a card in this game
+      const { data: existingCard } = await supabase
+        .from('bingo_cards')
+        .select('id')
+        .eq('game_id', gameId)
+        .eq('player_id', session.user.id)
+        .single();
+
+      if (existingCard) {
+        toast({
+          title: "Aviso",
+          description: "Você já possui uma cartela neste jogo. Redirecionando...",
+        });
+        navigate('/player', { state: { gameId } });
+        return;
+      }
+
       const selectedCardData = generateCards().find(card => card.id === selectedCard);
       if (!selectedCardData) {
         throw new Error("Cartela não encontrada");
@@ -105,7 +122,7 @@ export const CardSelectionView = ({ gameId, onBack }: CardSelectionViewProps) =>
       console.error('Error joining game:', error);
       toast({
         title: "Erro ao entrar no jogo",
-        description: error.message || "Não foi possível entrar no jogo selecionado.",
+        description: "Não foi possível entrar no jogo selecionado.",
         variant: "destructive"
       });
     } finally {
