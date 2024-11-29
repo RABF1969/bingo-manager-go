@@ -45,11 +45,12 @@ export const AdminDashboardContent = () => {
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
+      // Modificado para buscar todos os jogos sem filtros adicionais
       const { data, error } = await supabase
         .from('games')
         .select(`
           *,
-          winner_card:bingo_cards!inner(
+          winner_card:bingo_cards(
             player:profiles(name, email, phone)
           )
         `)
