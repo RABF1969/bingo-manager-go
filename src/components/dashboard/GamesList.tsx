@@ -6,6 +6,17 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 interface Game {
   id: string;
@@ -29,6 +40,7 @@ interface GamesListProps {
 
 export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps) => {
   const { toast } = useToast();
+  const [gameToDelete, setGameToDelete] = useState<string | null>(null);
 
   const getGameStatus = (game: Game) => {
     if (game.status === 'finished') return 'Encerrado';
@@ -47,28 +59,41 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
     }
   };
 
-  const handleDeleteGame = async (gameId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (gameId: string, status: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click event
+    if (status === 'finished') {
+      toast({
+        title: "Ação não permitida",
+        description: "Não é possível excluir jogos encerrados.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setGameToDelete(gameId);
+  };
+
+  const handleDeleteGame = async () => {
+    if (!gameToDelete) return;
 
     try {
       const { error: deleteCardsError } = await supabase
         .from('bingo_cards')
         .delete()
-        .eq('game_id', gameId);
+        .eq('game_id', gameToDelete);
 
       if (deleteCardsError) throw deleteCardsError;
 
       const { error: deleteDrawnNumbersError } = await supabase
         .from('drawn_numbers')
         .delete()
-        .eq('game_id', gameId);
+        .eq('game_id', gameToDelete);
 
       if (deleteDrawnNumbersError) throw deleteDrawnNumbersError;
 
       const { error: deleteGameError } = await supabase
         .from('games')
         .delete()
-        .eq('id', gameId);
+        .eq('id', gameToDelete);
 
       if (deleteGameError) throw deleteGameError;
 
@@ -86,6 +111,8 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
         description: "Não foi possível excluir o jogo. Tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      setGameToDelete(null);
     }
   };
 
@@ -131,8 +158,10 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
-                        onClick={(e) => handleDeleteGame(game.id, e)}
+                        className={`hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20 ${
+                          game.status === 'finished' ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        onClick={(e) => handleDeleteClick(game.id, game.status, e)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -144,6 +173,26 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
           </div>
         </div>
       </CardContent>
+
+      <AlertDialog open={!!gameToDelete} onOpenChange={() => setGameToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este jogo? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteGame}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
