@@ -17,6 +17,29 @@ export const AdminDashboardContent = () => {
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
+  // Subscribe to real-time changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('games_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'games'
+        },
+        (payload) => {
+          // Force a refetch when any change occurs
+          queryClient.invalidateQueries({ queryKey: ['games'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const { data: games, refetch: refetchGames } = useQuery({
     queryKey: ['games'],
     queryFn: async () => {
@@ -48,8 +71,10 @@ export const AdminDashboardContent = () => {
 
       return gamesWithCreatorFlag;
     },
-    refetchInterval: 5000, // Atualiza a cada 5 segundos
+    refetchInterval: 5000,
     refetchOnWindowFocus: true,
+    staleTime: 0, // Consider data always stale
+    cacheTime: 0, // Don't cache the data
   });
 
   useEffect(() => {
@@ -96,14 +121,15 @@ export const AdminDashboardContent = () => {
         description: "Novo jogo criado com sucesso.",
       });
 
-      // Força uma atualização imediata dos dados
+      // Force immediate data update
       await queryClient.invalidateQueries({ queryKey: ['games'] });
       await refetchGames();
       
-      // Adiciona o novo jogo ao cache existente para atualização imediata
+      // Update cache immediately
       queryClient.setQueryData(['games'], (oldData: any) => {
         if (!oldData || !data) return oldData;
-        return [{ ...data, isCreator: true }, ...oldData];
+        const newGame = { ...data, isCreator: true };
+        return Array.isArray(oldData) ? [newGame, ...oldData] : [newGame];
       });
     } catch (error) {
       toast({
