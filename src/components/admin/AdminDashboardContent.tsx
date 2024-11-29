@@ -93,7 +93,8 @@ export const AdminDashboardContent = () => {
         description: "Novo jogo criado com sucesso.",
       });
 
-      refetchGames();
+      // Immediately refetch games after successful creation
+      await refetchGames();
     } catch (error) {
       toast({
         title: "Erro ao criar jogo",
