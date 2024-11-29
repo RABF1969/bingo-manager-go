@@ -16,7 +16,7 @@ export const BingoGrid: React.FC<BingoGridProps> = ({
   return (
     <>
       <BingoHeader />
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-5 gap-1 sm:gap-2 md:gap-4">
         {card.map((row, rowIndex) => (
           row.map((cell, colIndex) => (
             <BingoCell

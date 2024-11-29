@@ -16,6 +16,7 @@ interface PlayerCardProps {
   markedNumbers?: number[];
   gameId?: string;
   cardId?: string;
+  isMobile?: boolean;
 }
 
 export const PlayerCard = ({ 
@@ -23,7 +24,8 @@ export const PlayerCard = ({
   preview = false, 
   markedNumbers = [], 
   gameId, 
-  cardId 
+  cardId,
+  isMobile = false
 }: PlayerCardProps) => {
   const [card, setCard] = useState<BingoCell[][]>([]);
   const { toast } = useToast();
@@ -164,14 +166,14 @@ export const PlayerCard = ({
   };
 
   return (
-    <div className={`container mx-auto p-4 ${preview ? 'max-w-sm' : 'max-w-xl'}`}>
+    <div className={`container mx-auto p-2 sm:p-4 ${preview ? 'max-w-[280px] sm:max-w-sm' : 'max-w-sm sm:max-w-md md:max-w-xl'}`}>
       {!preview && (
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-transparent bg-clip-text">
+        <div className="text-center mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-violet-500 to-fuchsia-500 text-transparent bg-clip-text">
             Sua Cartela de Bingo
           </h1>
           {cardId && (
-            <p className="text-sm text-muted-foreground mb-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
               Cartela #{cardId.slice(0, 8)}
             </p>
           )}
@@ -179,7 +181,7 @@ export const PlayerCard = ({
             <Button
               onClick={generateCard}
               variant="outline"
-              className="mt-4 hover:bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:text-white transition-all duration-300"
+              className="mt-2 sm:mt-4 hover:bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:text-white transition-all duration-300"
             >
               Nova Cartela
             </Button>
@@ -187,10 +189,10 @@ export const PlayerCard = ({
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-950 dark:to-fuchsia-950 rounded-xl shadow-xl p-8 transform hover:scale-[1.02] transition-all duration-300">
+      <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 dark:from-violet-950 dark:to-fuchsia-950 rounded-xl shadow-xl p-3 sm:p-6 md:p-8 transform hover:scale-[1.02] transition-all duration-300">
         {preview && cardId && (
-          <div className="text-center mb-4">
-            <span className="text-sm text-muted-foreground">
+          <div className="text-center mb-2 sm:mb-4">
+            <span className="text-xs sm:text-sm text-muted-foreground">
               Cartela #{cardId.slice(0, 8)}
             </span>
           </div>

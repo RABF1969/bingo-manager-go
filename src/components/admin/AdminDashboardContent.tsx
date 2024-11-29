@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { AdminGameManager } from '@/components/admin/AdminGameManager';
 import { CreateGameDialog } from '@/components/admin/CreateGameDialog';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const AdminDashboardContent = () => {
   const { toast } = useToast();
@@ -16,6 +17,7 @@ export const AdminDashboardContent = () => {
   const queryClient = useQueryClient();
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   // Subscribe to real-time changes
   useEffect(() => {
@@ -144,15 +146,15 @@ export const AdminDashboardContent = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-indigo-100 dark:from-purple-950 dark:via-pink-950 dark:to-indigo-950">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white/50 dark:bg-gray-800/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white/50 dark:bg-gray-800/50 p-4 md:p-6 rounded-xl backdrop-blur-sm shadow-lg">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent text-center md:text-left">
             Painel Administrativo
           </h1>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 md:gap-4 w-full md:w-auto">
             <Button 
               onClick={() => navigate('/')} 
               variant="outline"
-              className="bg-white/80 hover:bg-white dark:bg-gray-800 dark:hover:bg-gray-700"
+              className="bg-white/80 hover:bg-white dark:bg-gray-800 dark:hover:bg-gray-700 w-full sm:w-auto"
             >
               Voltar para Início
             </Button>
@@ -162,9 +164,9 @@ export const AdminDashboardContent = () => {
         
         <DashboardStats totalPlayers={totalPlayers} gameId={selectedGameId} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-8">
-            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border-none">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
+          <div className="space-y-4 md:space-y-8">
+            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border-none overflow-hidden">
               <AdminGameManager 
                 games={games || []} 
                 onGamesUpdate={refetchGames} 
@@ -172,11 +174,12 @@ export const AdminDashboardContent = () => {
               />
             </Card>
           </div>
-          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border-none">
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border-none overflow-hidden">
             <GamesList 
               games={games || []} 
               onSelectGame={setSelectedGameId}
               onGamesUpdate={refetchGames}
+              isMobile={isMobile}
             />
           </Card>
         </div>

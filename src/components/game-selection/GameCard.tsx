@@ -28,11 +28,11 @@ export const GameCard = ({ id, createdAt, status, onSelect }: GameCardProps) => 
   };
 
   return (
-    <Card className="p-6 hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-center">
+    <Card className="p-4 md:p-6 hover:shadow-lg transition-shadow">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <p className="font-medium text-lg">Jogo #{id.slice(0, 8)}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="font-medium text-base md:text-lg">Jogo #{id.slice(0, 8)}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">
             Criado em: {new Date(createdAt).toLocaleString('pt-BR')}
           </p>
           <div className="mt-2">
@@ -41,7 +41,7 @@ export const GameCard = ({ id, createdAt, status, onSelect }: GameCardProps) => 
         </div>
         <Button 
           onClick={() => onSelect(id)}
-          className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
+          className="w-full sm:w-auto bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600"
           disabled={!isGameActive}
         >
           {isGameActive ? 'Selecionar' : 'Jogo Encerrado'}

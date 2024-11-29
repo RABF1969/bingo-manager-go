@@ -13,13 +13,14 @@ export const BingoCell = ({ number, marked, onClick, preview }: BingoCellProps) 
     <div
       onClick={onClick}
       className={cn(
-        "aspect-square flex items-center justify-center text-xl font-bold rounded-lg shadow-sm transition-all duration-300",
+        "aspect-square flex items-center justify-center text-base sm:text-lg md:text-xl font-bold rounded-lg shadow-sm transition-all duration-300",
         marked 
           ? "bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white scale-95 transform hover:scale-100" 
           : "bg-white dark:bg-gray-800 hover:bg-violet-100 dark:hover:bg-violet-900 cursor-pointer text-violet-800 dark:text-violet-200",
         preview && "cursor-default",
         "border-2 border-transparent hover:border-violet-300 dark:hover:border-violet-700",
-        "min-h-[3rem]"
+        "min-h-[2.5rem] sm:min-h-[3rem]",
+        "p-1 sm:p-2"
       )}
     >
       {number === 0 ? 'LIVRE' : number}
