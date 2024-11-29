@@ -74,7 +74,7 @@ export const AdminDashboardContent = () => {
     refetchInterval: 5000,
     refetchOnWindowFocus: true,
     staleTime: 0, // Consider data always stale
-    cacheTime: 0, // Don't cache the data
+    gcTime: 0, // Don't cache the data (previously cacheTime)
   });
 
   useEffect(() => {
