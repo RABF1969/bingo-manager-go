@@ -6,9 +6,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { GamesList } from '@/components/dashboard/GamesList';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AdminGameManager } from '@/components/admin/AdminGameManager';
+import { CreateGameDialog } from '@/components/admin/CreateGameDialog';
 
 export const AdminDashboardContent = () => {
   const { toast } = useToast();
@@ -40,7 +40,6 @@ export const AdminDashboardContent = () => {
         throw error;
       }
 
-      // Add isCreator flag to each game
       const gamesWithCreatorFlag = data?.map(game => ({
         ...game,
         isCreator: session?.user.id === game.created_by
@@ -119,13 +118,7 @@ export const AdminDashboardContent = () => {
             >
               Voltar para Início
             </Button>
-            <Button 
-              onClick={handleCreateGame} 
-              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Jogo
-            </Button>
+            <CreateGameDialog onCreateGame={handleCreateGame} />
           </div>
         </div>
         
