@@ -36,9 +36,10 @@ interface GamesListProps {
   games: Game[];
   onSelectGame: (gameId: string) => void;
   onGamesUpdate?: () => void;
+  isMobile?: boolean; // Added isMobile prop
 }
 
-export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps) => {
+export const GamesList = ({ games, onSelectGame, onGamesUpdate, isMobile }: GamesListProps) => {
   const { toast } = useToast();
   const [gameToDelete, setGameToDelete] = useState<string | null>(null);
 
@@ -60,7 +61,7 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
   };
 
   const handleDeleteClick = (gameId: string, status: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent row click event
+    e.stopPropagation();
     if (status === 'finished') {
       toast({
         title: "Ação não permitida",
@@ -76,7 +77,6 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
     if (!gameToDelete) return;
 
     try {
-      // Delete bingo cards first
       const { error: deleteCardsError } = await supabase
         .from('bingo_cards')
         .delete()
@@ -84,7 +84,6 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
 
       if (deleteCardsError) throw deleteCardsError;
 
-      // Delete drawn numbers
       const { error: deleteDrawnNumbersError } = await supabase
         .from('drawn_numbers')
         .delete()
@@ -92,7 +91,6 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
 
       if (deleteDrawnNumbersError) throw deleteDrawnNumbersError;
 
-      // Finally delete the game
       const { error: deleteGameError } = await supabase
         .from('games')
         .delete()
