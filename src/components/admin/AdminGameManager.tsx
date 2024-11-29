@@ -111,8 +111,9 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
           setWinner(card.player as Player);
           setShowWinnerDialog(true);
           toast({
-            title: "Bingo!",
+            title: "BINGO!",
             description: `${card.player.name} completou a cartela!`,
+            variant: "default",
           });
           onGamesUpdate();
         }
@@ -144,7 +145,7 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
         <CardContent className="pt-6">
           <NumberDrawing 
             gameId={currentGameId}
-            onNumberDrawn={handleGameUpdate}
+            onDrawn={handleGameUpdate}
           />
         </CardContent>
       </Card>
