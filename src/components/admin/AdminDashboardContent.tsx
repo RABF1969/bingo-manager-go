@@ -19,6 +19,8 @@ export const AdminDashboardContent = () => {
   const { data: games, refetch: refetchGames } = useQuery({
     queryKey: ['games'],
     queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       const { data, error } = await supabase
         .from('games')
         .select(`
@@ -37,7 +39,14 @@ export const AdminDashboardContent = () => {
         });
         throw error;
       }
-      return data;
+
+      // Add isCreator flag to each game
+      const gamesWithCreatorFlag = data?.map(game => ({
+        ...game,
+        isCreator: session?.user.id === game.created_by
+      })) || [];
+
+      return gamesWithCreatorFlag;
     },
   });
 
