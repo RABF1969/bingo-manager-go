@@ -1,22 +1,14 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { NumberDrawing } from "@/components/NumberDrawing";
 import { GamesList } from "@/components/dashboard/GamesList";
-import { WinnerDialog } from "@/components/dashboard/WinnerDialog";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AdminGameManager } from "@/components/admin/AdminGameManager";
-
-interface Player {
-  name: string;
-  email: string;
-  phone: string | null;
-}
 
 export const AdminDashboardContent = () => {
   const { toast } = useToast();
@@ -97,21 +89,25 @@ export const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 p-4">
-      <div className="container mx-auto max-w-7xl">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-indigo-100 dark:from-purple-950 dark:via-pink-950 dark:to-indigo-950">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8 bg-white/50 dark:bg-gray-800/50 p-6 rounded-xl backdrop-blur-sm shadow-lg">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             Painel Administrativo
           </h1>
           <div className="flex gap-4">
-            <Button onClick={() => navigate('/')} variant="outline">
+            <Button 
+              onClick={() => navigate('/')} 
+              variant="outline"
+              className="bg-white/80 hover:bg-white dark:bg-gray-800 dark:hover:bg-gray-700"
+            >
               Voltar para Início
             </Button>
             <Button 
               onClick={handleCreateGame} 
-              className="gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-2" />
               Novo Jogo
             </Button>
           </div>
@@ -120,15 +116,21 @@ export const AdminDashboardContent = () => {
         <DashboardStats totalPlayers={totalPlayers} gameId={selectedGameId} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <AdminGameManager 
-            games={games || []} 
-            onGamesUpdate={refetchGames} 
-            onGameSelect={setSelectedGameId}
-          />
-          <GamesList 
-            games={games || []} 
-            onSelectGame={setSelectedGameId}
-          />
+          <div className="space-y-8">
+            <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border-none">
+              <AdminGameManager 
+                games={games || []} 
+                onGamesUpdate={refetchGames} 
+                onGameSelect={setSelectedGameId}
+              />
+            </Card>
+          </div>
+          <Card className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-xl hover:shadow-2xl transition-all duration-300 border-none">
+            <GamesList 
+              games={games || []} 
+              onSelectGame={setSelectedGameId}
+            />
+          </Card>
         </div>
       </div>
     </div>
