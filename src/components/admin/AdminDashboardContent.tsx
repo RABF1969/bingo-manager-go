@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -13,6 +13,7 @@ import { CreateGameDialog } from '@/components/admin/CreateGameDialog';
 export const AdminDashboardContent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [totalPlayers, setTotalPlayers] = useState(0);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
 
@@ -93,7 +94,8 @@ export const AdminDashboardContent = () => {
         description: "Novo jogo criado com sucesso.",
       });
 
-      // Immediately refetch games after successful creation
+      // Invalidate and refetch games query
+      await queryClient.invalidateQueries({ queryKey: ['games'] });
       await refetchGames();
     } catch (error) {
       toast({
