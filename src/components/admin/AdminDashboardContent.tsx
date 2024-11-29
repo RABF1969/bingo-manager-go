@@ -48,6 +48,8 @@ export const AdminDashboardContent = () => {
 
       return gamesWithCreatorFlag;
     },
+    refetchInterval: 5000, // Atualiza a cada 5 segundos
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -94,9 +96,15 @@ export const AdminDashboardContent = () => {
         description: "Novo jogo criado com sucesso.",
       });
 
-      // Invalidate and refetch games query
+      // Força uma atualização imediata dos dados
       await queryClient.invalidateQueries({ queryKey: ['games'] });
       await refetchGames();
+      
+      // Adiciona o novo jogo ao cache existente para atualização imediata
+      queryClient.setQueryData(['games'], (oldData: any) => {
+        if (!oldData || !data) return oldData;
+        return [{ ...data, isCreator: true }, ...oldData];
+      });
     } catch (error) {
       toast({
         title: "Erro ao criar jogo",
