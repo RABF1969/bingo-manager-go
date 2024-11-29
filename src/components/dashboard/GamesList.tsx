@@ -1,7 +1,11 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Game {
   id: string;
@@ -20,9 +24,12 @@ interface Game {
 interface GamesListProps {
   games: Game[];
   onSelectGame: (gameId: string) => void;
+  onGamesUpdate?: () => void;
 }
 
-export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
+export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps) => {
+  const { toast } = useToast();
+
   const getGameStatus = (game: Game) => {
     if (game.status === 'finished') return 'Encerrado';
     if (game.status === 'waiting') return 'Aguardando';
@@ -37,6 +44,48 @@ export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
         return 'text-yellow-600 dark:text-yellow-400';
       default:
         return 'text-green-600 dark:text-green-400';
+    }
+  };
+
+  const handleDeleteGame = async (gameId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click event
+
+    try {
+      const { error: deleteCardsError } = await supabase
+        .from('bingo_cards')
+        .delete()
+        .eq('game_id', gameId);
+
+      if (deleteCardsError) throw deleteCardsError;
+
+      const { error: deleteDrawnNumbersError } = await supabase
+        .from('drawn_numbers')
+        .delete()
+        .eq('game_id', gameId);
+
+      if (deleteDrawnNumbersError) throw deleteDrawnNumbersError;
+
+      const { error: deleteGameError } = await supabase
+        .from('games')
+        .delete()
+        .eq('id', gameId);
+
+      if (deleteGameError) throw deleteGameError;
+
+      toast({
+        title: "Sucesso",
+        description: "Jogo excluído com sucesso",
+      });
+
+      if (onGamesUpdate) {
+        onGamesUpdate();
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir jogo",
+        description: "Não foi possível excluir o jogo. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -56,6 +105,7 @@ export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
                   <TableHead className="text-purple-700 dark:text-purple-300">Status</TableHead>
                   <TableHead className="text-purple-700 dark:text-purple-300">Criado</TableHead>
                   <TableHead className="text-purple-700 dark:text-purple-300">Ganhador</TableHead>
+                  <TableHead className="text-purple-700 dark:text-purple-300 w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -76,6 +126,16 @@ export const GamesList = ({ games, onSelectGame }: GamesListProps) => {
                     </TableCell>
                     <TableCell className="text-gray-600 dark:text-gray-300">
                       {game.winner_card?.[0]?.player.name || '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                        onClick={(e) => handleDeleteGame(game.id, e)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -129,6 +129,7 @@ export const AdminDashboardContent = () => {
             <GamesList 
               games={games || []} 
               onSelectGame={setSelectedGameId}
+              onGamesUpdate={refetchGames}
             />
           </Card>
         </div>
