@@ -5,6 +5,7 @@ import { WinnerDialog } from "@/components/dashboard/WinnerDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { isCardComplete } from "@/utils/winnerUtils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Player {
   name: string;
@@ -35,7 +36,11 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
     
     await checkGameCompletion(currentGameId);
     await checkForWinner(currentGameId);
-    onGameSelect(currentGameId);
+  };
+
+  const handleGameSelect = (gameId: string) => {
+    setCurrentGameId(gameId);
+    onGameSelect(gameId);
   };
 
   const checkGameCompletion = async (gameId: string) => {
@@ -116,13 +121,30 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
     }
   };
 
+  const activeGames = games.filter(game => game.status !== 'finished');
+
   return (
     <div className="space-y-8">
+      <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg shadow-lg backdrop-blur-sm">
+        <Select onValueChange={handleGameSelect} value={currentGameId || undefined}>
+          <SelectTrigger className="w-full bg-white dark:bg-gray-700">
+            <SelectValue placeholder="Selecione um jogo para iniciar" />
+          </SelectTrigger>
+          <SelectContent>
+            {activeGames.map((game) => (
+              <SelectItem key={game.id} value={game.id}>
+                Jogo #{game.id.slice(0, 8)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Card className="bg-gradient-to-br from-white to-purple-50">
         <CardContent className="pt-6">
           <NumberDrawing 
             gameId={currentGameId}
-            onNumberDrawn={handleGameUpdate}
+            onDrawn={handleGameUpdate}
           />
         </CardContent>
       </Card>
