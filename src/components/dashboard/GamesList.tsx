@@ -76,6 +76,7 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
     if (!gameToDelete) return;
 
     try {
+      // Delete bingo cards first
       const { error: deleteCardsError } = await supabase
         .from('bingo_cards')
         .delete()
@@ -83,6 +84,7 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
 
       if (deleteCardsError) throw deleteCardsError;
 
+      // Delete drawn numbers
       const { error: deleteDrawnNumbersError } = await supabase
         .from('drawn_numbers')
         .delete()
@@ -90,6 +92,7 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
 
       if (deleteDrawnNumbersError) throw deleteDrawnNumbersError;
 
+      // Finally delete the game
       const { error: deleteGameError } = await supabase
         .from('games')
         .delete()
@@ -106,6 +109,7 @@ export const GamesList = ({ games, onSelectGame, onGamesUpdate }: GamesListProps
         onGamesUpdate();
       }
     } catch (error) {
+      console.error('Error deleting game:', error);
       toast({
         title: "Erro ao excluir jogo",
         description: "Não foi possível excluir o jogo. Tente novamente.",
