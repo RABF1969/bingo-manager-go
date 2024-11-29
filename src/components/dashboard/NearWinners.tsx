@@ -20,7 +20,7 @@ export const NearWinners = ({ gameId }: { gameId: string }) => {
   useEffect(() => {
     const checkWinnerAndNearWinners = async () => {
       // Check for winner
-      const { data: game } = await supabase
+      const { data: games } = await supabase
         .from('games')
         .select(`
           winner_card_id,
@@ -30,12 +30,13 @@ export const NearWinners = ({ gameId }: { gameId: string }) => {
           )
         `)
         .eq('id', gameId)
-        .not('winner_card_id', 'is', null)
-        .single();
+        .not('winner_card_id', 'is', null);
 
-      if (game) {
+      // If we have a winner game, show winner info
+      if (games && games.length > 0) {
+        const game = games[0];
         setWinner({
-          name: game.winner.player.name,
+          name: game.winner[0].player.name,
           timestamp: new Date(game.finished_at).toLocaleTimeString('pt-BR')
         });
         setNearWinners([]);

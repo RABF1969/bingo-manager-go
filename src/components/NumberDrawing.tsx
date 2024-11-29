@@ -10,9 +10,10 @@ interface DrawnNumber {
 
 interface NumberDrawingProps {
   gameId: string | null;
+  onDrawn?: () => void;  // Make onDrawn optional
 }
 
-export const NumberDrawing = ({ gameId }: NumberDrawingProps) => {
+export const NumberDrawing = ({ gameId, onDrawn }: NumberDrawingProps) => {
   const [drawnNumbers, setDrawnNumbers] = useState<DrawnNumber[]>([]);
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
   const { toast } = useToast();
@@ -117,6 +118,9 @@ export const NumberDrawing = ({ gameId }: NumberDrawingProps) => {
         title: "Número Sorteado",
         description: `O número ${newNumber} foi sorteado!`,
       });
+
+      // Call onDrawn callback if provided
+      onDrawn?.();
     } catch (error) {
       toast({
         title: "Erro",
