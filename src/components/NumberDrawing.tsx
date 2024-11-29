@@ -10,10 +10,11 @@ interface DrawnNumber {
 
 interface NumberDrawingProps {
   gameId: string | null;
-  onDrawn?: () => void;  // Make onDrawn optional
+  onDrawn?: () => void;
+  gameStatus?: string;
 }
 
-export const NumberDrawing = ({ gameId, onDrawn }: NumberDrawingProps) => {
+export const NumberDrawing = ({ gameId, onDrawn, gameStatus }: NumberDrawingProps) => {
   const [drawnNumbers, setDrawnNumbers] = useState<DrawnNumber[]>([]);
   const [currentNumber, setCurrentNumber] = useState<number | null>(null);
   const { toast } = useToast();
@@ -68,6 +69,15 @@ export const NumberDrawing = ({ gameId, onDrawn }: NumberDrawingProps) => {
       toast({
         title: "Erro",
         description: "Nenhum jogo selecionado para sorteio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (gameStatus === 'finished') {
+      toast({
+        title: "Jogo Encerrado",
+        description: "Este jogo já foi encerrado e não permite mais sorteios",
         variant: "destructive",
       });
       return;
@@ -143,9 +153,14 @@ export const NumberDrawing = ({ gameId, onDrawn }: NumberDrawingProps) => {
       <Button
         onClick={drawNumber}
         className="w-full px-8 py-6 text-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-md"
-        disabled={!gameId}
+        disabled={!gameId || gameStatus === 'finished'}
       >
-        {gameId ? "Sortear Próximo Número" : "Selecione um jogo para iniciar"}
+        {!gameId 
+          ? "Selecione um jogo para iniciar" 
+          : gameStatus === 'finished'
+            ? "Jogo Encerrado"
+            : "Sortear Próximo Número"
+        }
       </Button>
 
       <div className="w-full">

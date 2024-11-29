@@ -30,6 +30,7 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
   const [currentGameId, setCurrentGameId] = useState<string | null>(null);
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [winner, setWinner] = useState<Player | null>(null);
+  const currentGame = games.find(game => game.id === currentGameId);
 
   const handleGameUpdate = async () => {
     if (!currentGameId) return;
@@ -146,6 +147,7 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
           <NumberDrawing 
             gameId={currentGameId}
             onDrawn={handleGameUpdate}
+            gameStatus={currentGame?.status}
           />
         </CardContent>
       </Card>
