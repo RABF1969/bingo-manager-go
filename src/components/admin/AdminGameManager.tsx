@@ -122,7 +122,7 @@ export const AdminGameManager = ({ games, onGamesUpdate, onGameSelect }: AdminGa
         <CardContent className="pt-6">
           <NumberDrawing 
             gameId={currentGameId}
-            onDrawn={handleGameUpdate}
+            onNumberDrawn={handleGameUpdate}
           />
         </CardContent>
       </Card>
