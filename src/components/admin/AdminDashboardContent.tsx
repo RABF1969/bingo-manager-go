@@ -3,12 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { GamesList } from "@/components/dashboard/GamesList";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { GamesList } from '@/components/dashboard/GamesList';
+import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { AdminGameManager } from "@/components/admin/AdminGameManager";
+import { AdminGameManager } from '@/components/admin/AdminGameManager';
 
 export const AdminDashboardContent = () => {
   const { toast } = useToast();
@@ -29,7 +29,14 @@ export const AdminDashboardContent = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Erro ao carregar jogos",
+          description: "Não foi possível carregar a lista de jogos.",
+          variant: "destructive"
+        });
+        throw error;
+      }
       return data;
     },
   });
